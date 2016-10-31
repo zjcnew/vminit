@@ -2,8 +2,8 @@
 
 使用方法：
 
-将autovm.sh与install.sh脚本拷贝至虚拟机，执行sh install.sh安装脚本；
+1.将autovm.sh与install.sh脚本拷贝至虚拟机，执行sh install.sh安装脚本；
 
-将主机名、登录密码、网络参数、存储配置等参数传给vminit.sh脚本后打包为ISO镜像，开机后使用虚拟光驱加载自动运行即可。
+2.将主机名、登录密码、网络参数、存储配置等参数传给vminit.sh脚本后打包为ISO镜像，开机后使用虚拟光驱加载自动运行即可。
 
-vminit_manual.sh为手动执行脚本，开机后提示键入IP地址与登录密码自动完成配置。
+3.vminit_manual.sh为手动执行脚本，虚拟机开机后提示键入IP地址与登录密码来自动完成配置。
