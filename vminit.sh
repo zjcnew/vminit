@@ -1,7 +1,7 @@
 ﻿#!/bin/sh
 # Target: Automatic configuration hostname,password,network,datastore for hosts
 # Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
-# Update content: update default filesystem "ext4" for centos 7
+# Update content: update default filesystem "ext4" for Centos 7
 # Update date: 2016/10/28
 # Author: niaoyun.com
 # Tel: 400-688-3065
