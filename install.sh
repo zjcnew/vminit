@@ -1,5 +1,5 @@
 #!/bin/bash
-# Target: Install autovm.sh script
+# Target: Auto install autovm.sh script
 # Update date: 2016/6/30
 # Author: niaoyun.com
 # Tel: 400-688-3065

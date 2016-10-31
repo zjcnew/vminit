@@ -1,7 +1,7 @@
 #!/bin/sh
 # Target: Automatic mount cdrom device and run configuration script
 # Application platform: CentOS RedHat FreeBSD Ubuntu Debian
-# Update content: Script integrate together with CentOS FreeBSD Ubuntu platform, and some optimization.
+# Update content: Script integrate together with CentOS FreeBSD Ubuntu platform and some optimization.
 # Update date: 2016/9/27
 # Author: niaoyun.com
 # Tel: 400-688-3065
