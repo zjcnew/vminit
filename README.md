@@ -1,7 +1,7 @@
-# è™šæ‹Ÿæœºè‡ªåŠ¨åŒ–é…ç½®SHELLè„šæœ¬
+# ÐéÄâ»ú×Ô¶¯»¯ÅäÖÃSHELL½Å±¾
 
-ä½¿ç”¨æ–¹æ³•ï¼š
-å°†autovm.shä¸Žinstall.shè„šæœ¬æ‹·è´è‡³è™šæ‹Ÿæœºï¼Œæ‰§è¡Œsh install.shå®‰è£…è„šæœ¬ï¼›
-å°†vminit.shå­˜äºŽISOé•œåƒï¼Œä½¿ç”¨è™šæ‹Ÿå…‰é©±åŠ è½½å¼€æœºåŽè‡ªåŠ¨è¿è¡Œå³å¯ã€‚
+Ê¹ÓÃ·½·¨£º
+½«autovm.shÓëinstall.sh½Å±¾¿½±´ÖÁÐéÄâ»ú£¬Ö´ÐÐsh install.sh°²×°½Å±¾£»
+½«vminit.sh´æÓÚISO¾µÏñ£¬Ê¹ÓÃÐéÄâ¹âÇý¼ÓÔØ¿ª»úºó×Ô¶¯ÔËÐÐ¼´¿É¡£
 
-vminit_manual.shä¸ºæ‰‹åŠ¨æ‰§è¡Œè„šæœ¬ï¼Œå¼€æœºåŽé”®å…¥ç³»ç»ŸIPåœ°å€ä¸Žå¯†ç è‡ªåŠ¨å®Œæˆé…ç½®ã€‚
+vminit_manual.shÎªÊÖ¶¯Ö´ÐÐ½Å±¾£¬¿ª»úºó¼üÈëÏµÍ³IPµØÖ·ÓëÃÜÂë×Ô¶¯Íê³ÉÅäÖÃ¡£
