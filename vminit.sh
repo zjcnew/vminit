@@ -1,11 +1,11 @@
 ﻿#!/bin/sh
 # Target: Automatic configuration hostname,password,network,datastore for hosts
 # Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
-# Update content: update default filesystem "ext4" for Centos 7
-# Update date: 2016/10/28
+# Update content: update dns configure for centos
+# Update date: 2016/11/9
 # Author: niaoyun.com
 # Tel: 400-688-3065
-# Version: 1.73
+# Version: 1.74
 
 HN_MOD={HN_MOD}		# hostname
 PS_MOD={PS_MOD}		# password
@@ -82,11 +82,16 @@ CentOS ()
 
 		local network_file=/etc/sysconfig/network-scripts/ifcfg-$1
 
+    if [ $(grep -c '^DNS' $network_file) -ge 1 ]
+		then
+			sed -i '/DNS/d' $network_file
+   	fi
+
 		if [ $(grep '^DEVICE' $network_file | grep -c "${1}") -eq 0 ] && [ ! "${1}" == "" ]
 		then
         		sed -i '/DEVICE/d' $network_file
         		echo DEVICE=${1} >> $network_file
-    		fi
+    fi
 
 		macaddress=`cat /sys/class/net/$1/address | tr '[a-z]' '[A-Z]'`
 
@@ -228,9 +233,9 @@ CentOS ()
 	{
 		if [ ! $DN_MOD == "" ]
 		then
-        		dns1=`echo $DN_MOD | awk -F "," '{printf $1}'`
-                	dns2=`echo $DN_MOD | awk -F "," '{printf $2}'`
-                	dns3=`echo $DN_MOD | awk -F "," '{printf $3}'`
+        		dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
+                	dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
+                	dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
 
                 	if [ ! $dns1 == "" ] && [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 1p | grep -c $dns1) -eq 0 ]
 			then
@@ -707,9 +712,9 @@ FreeBSD ()
 	{
 		if [ ! $DN_MOD == "" ]
                 then
-                	dns1=`echo $DN_MOD | awk -F "," '{printf $1}'`
-                	dns2=`echo $DN_MOD | awk -F "," '{printf $2}'`
-                	dns3=`echo $DN_MOD | awk -F "," '{printf $3}'`
+                	dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
+                	dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
+                	dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
 
                 	if [ ! $dns1 == "" ] && [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 1p | grep -c $dns1) -eq 0 ]
                 	then
@@ -993,9 +998,9 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 	{
 		if [ $DN_MOD ]
 		then
-        		dns1=`echo $DN_MOD | awk -F "," '{printf $1}'`
-                	dns2=`echo $DN_MOD | awk -F "," '{printf $2}'`
-                	dns3=`echo $DN_MOD | awk -F "," '{printf $3}'`
+        		dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
+                	dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
+                	dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
 
 			if [ $dns1 ]
 			then
@@ -1415,9 +1420,9 @@ openSUSE ()
 	{
 		if [ ! $DN_MOD == "" ]
 		then
-        		dns1=`echo $DN_MOD | awk -F "," '{printf $1}'`
-                	dns2=`echo $DN_MOD | awk -F "," '{printf $2}'`
-                	dns3=`echo $DN_MOD | awk -F "," '{printf $3}'`
+        		dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
+                	dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
+                	dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
 
                 	if [ ! $dns1 == "" ] && [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 1p | grep -c $dns1) -eq 0 ]
 			then
