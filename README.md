@@ -1,4 +1,4 @@
-vminit v1.74
+﻿vminit v1.74 [![Build Status](https://github.com/zjcnew/vminit)]
 ========================
 使用Shell编写的支持VMware虚拟机Linux系统自动化配置的脚本，支持CentOS、Red Hat、openSuSE、Ubuntu、Debian、FreeBSD平台！
 
