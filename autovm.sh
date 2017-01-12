@@ -2,10 +2,10 @@
 # Target: Automatic mount cdrom device and run configuration script
 # Application platform: CentOS RedHat FreeBSD Ubuntu Debian
 # Update content: Script integrate together with CentOS FreeBSD Ubuntu platform and some optimization.
-# Update date: 2016/9/27
+# Update date: 2017/1/12
 # Author: niaoyun.com
 # Tel: 400-688-3065
-# Version: 1.38
+# Version: 1.39
 
 # system path
 home="/opt/vminit"
@@ -33,7 +33,7 @@ then
 	then
 		if [ -f $home/$script ]
 		then
-			if [ ! $(cksum $home/$script | awk '{ print $1 }') == $(cksum $mount_dir/$script | awk '{ print $1 }') ]
+			if [ $(cksum $home/$script | awk '{ print $1 }') -ne $(cksum $mount_dir/$script | awk '{ print $1 }') ]
 			then
 				rm -f $home/$script
 				cp "$mount_dir/$script" "$home" && echo "copy vminit.sh file success" && umount $mount_dir

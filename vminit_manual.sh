@@ -1,4 +1,4 @@
-﻿#!/bin/sh
+#!/bin/sh
 # Target: Manual configuration hostname,password,network,datastore for hosts
 # Application platform: CentOS RedHat FreeBSD Ubuntu Debian OpenSUSE
 # Update content: update default filesystem "ext4" for Centos 7

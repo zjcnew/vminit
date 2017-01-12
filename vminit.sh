@@ -1,11 +1,11 @@
-﻿#!/bin/sh
+#!/bin/sh
 # Target: Automatic configuration hostname,password,network,datastore for hosts
 # Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
 # Update content: update dns configure for centos
-# Update date: 2016/11/9
+# Update date: 2017/1/12
 # Author: niaoyun.com
 # Tel: 400-688-3065
-# Version: 1.74
+# Version: 1.75
 
 HN_MOD={HN_MOD}		# hostname
 PS_MOD={PS_MOD}		# password
@@ -1263,7 +1263,7 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 		
 		if [ -f /var/cache/apt/archives/lock ]
 		then
-			fm -f /var/cache/apt/archives/lock
+			rm -f /var/cache/apt/archives/lock
 		fi
 		
 		if [ $(dpkg -l | grep -c -i nyterminal) -eq 0 ]
