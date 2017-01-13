@@ -1,11 +1,10 @@
 #!/bin/sh
 # Target: Manual configuration hostname,password,network,datastore for hosts
 # Application platform: CentOS RedHat FreeBSD Ubuntu Debian OpenSUSE
-# Update content: update default filesystem "ext4" for Centos 7
-# Update date: 2016/10/28
+# Update date: 2017/1/13
 # Author: niaoyun.com
 # Tel: 400-688-3065
-# Version: 1.64
+# Version: 1.66
 
 # system parameter
 ch_m=0
@@ -18,7 +17,8 @@ auto_tmp=$home/autovm.tmp
 # Allow repartitioning for datadisk
 FM_MOD=YES
 
-# Check if IP is correct
+# Check the legality of IP
+
 CheckIPAddr()
 {
 echo $1 | grep "^[0-9]\{1,3\}\.\([0-9]\{1,3\}\.\)\{2\}[0-9]\{1,3\}$" | egrep  -v '^255\.|^169\.254\.|^127\.|^10\.|^192\.168\.|^172\.16\.' > /dev/null;
@@ -87,9 +87,10 @@ else
         PS_MOD=$Password
 fi
 
-# Starting run
 exec 1>$log 2>&1
 echo "$(date '+%Y-%m-%d %H:%M:%S')  vminit script starting run" !
+
+# For CentOS or Red Hat System
 
 CentOS ()
 {
@@ -136,11 +137,16 @@ CentOS ()
 
 		local network_file=/etc/sysconfig/network-scripts/ifcfg-$1
 
+    if [ $(grep -c '^DNS' $network_file) -ge 1 ]
+		then
+			sed -i '/DNS/d' $network_file
+   	fi
+
 		if [ $(grep '^DEVICE' $network_file | grep -c "${1}") -eq 0 ] && [ ! "${1}" == "" ]
 		then
         		sed -i '/DEVICE/d' $network_file
         		echo DEVICE=${1} >> $network_file
-    		fi
+    fi
 
 		macaddress=`cat /sys/class/net/$1/address | tr '[a-z]' '[A-Z]'`
 
@@ -282,9 +288,9 @@ CentOS ()
 	{
 		if [ ! $DN_MOD == "" ]
 		then
-        		dns1=`echo $DN_MOD | awk -F "," '{printf $1}'`
-                	dns2=`echo $DN_MOD | awk -F "," '{printf $2}'`
-                	dns3=`echo $DN_MOD | awk -F "," '{printf $3}'`
+        		dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
+                	dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
+                	dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
 
                 	if [ ! $dns1 == "" ] && [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 1p | grep -c $dns1) -eq 0 ]
 			then
@@ -377,6 +383,11 @@ CentOS ()
 
 	restart_service ()
 	{
+		if [ "$ci_m" = 1 ]
+		then
+			/etc/init.d/network restart
+		fi
+		
 		if [ $(uname -r | awk -F'-' '{ print $1 }') == "3.10.0" ]
 		then
 			if [ $(rpm -qa | grep -c ^ntp) -ge 1 ]
@@ -397,6 +408,8 @@ CentOS ()
 			if [ $(rpm -qa | grep -c ^ntp) -eq 0 ]
 			then
 				yum install ntp -y
+				/etc/init.d/ntpd stop
+				/sbin/ntpdate 0.centos.pool.ntp.org &&  hwclock -w
 			fi
 			
 				chkconfig ntpd on
@@ -406,6 +419,8 @@ CentOS ()
 			if [ $(rpm -qa | grep -c ^ntp) -lt 2 ]
 			then
 				yum install ntp ntpdate -y
+				/etc/init.d/ntpd stop
+				/usr/sbin/ntpdate 0.centos.pool.ntp.org && hwclock -w
 			fi
 			
 			chkconfig ntpd on
@@ -415,14 +430,7 @@ CentOS ()
 		
 		if [ "$ch_m" = 1 ]
 		then
-			sed -i '/sh \/opt\/vminit\/auto\.sh/d' /etc/profile
-			rm -f $0
 			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
-		fi
-
-		if [ "$ci_m" = 1 ]
-		then
-			/etc/init.d/network restart
 		fi
 
 		echo "restart service success" !
@@ -479,17 +487,19 @@ CentOS ()
 
 			if [ -b /dev/sdb1 ] && [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
 			then
-				[ -d /data ] || mkdir /data
-				mount /dev/sdb1 /data && "mount /dev/sdb1 disk success" !
+			  if [ $(mount | grep -c 'sdb1') -eq 0 ]
+			  then
+				   [ -d /data ] || mkdir /data
+				   mount /dev/sdb1 /data && "mount /dev/sdb1 disk success" !
 
-				if [ $(mount | grep -c 'sdb1') -ge 1 ]
-				then
-					sed -i '/sdb1/d' /etc/fstab
-		filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
-
-			echo "/dev/sdb1               /data                   $filesystem    defaults        0 0" >> /etc/fstab
-				else
-					echo "mount /dev/sdb1 disk failed" !
+				   if [ $(mount | grep -c 'sdb1') -ge 1 ]
+				   then
+					    sed -i '/sdb1/d' /etc/fstab
+		          filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+			        echo "/dev/sdb1               /data                   $filesystem    defaults        0 0" >> /etc/fstab
+				   else
+					    echo "mount /dev/sdb1 disk failed" !
+				   fi
 				fi
 			else
 				echo "can not find correct filesystem on /dev/sdb1" !!
@@ -638,9 +648,11 @@ CentOS ()
 	password
 	datastore
 	nyinstall
-	restart_service	
+	restart_service
+	dnsserver
 }
 
+# For FreeBSD System
 
 FreeBSD ()
 {
@@ -758,9 +770,9 @@ FreeBSD ()
 	{
 		if [ ! $DN_MOD == "" ]
                 then
-                	dns1=`echo $DN_MOD | awk -F "," '{printf $1}'`
-                	dns2=`echo $DN_MOD | awk -F "," '{printf $2}'`
-                	dns3=`echo $DN_MOD | awk -F "," '{printf $3}'`
+                	dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
+                	dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
+                	dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
 
                 	if [ ! $dns1 == "" ] && [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 1p | grep -c $dns1) -eq 0 ]
                 	then
@@ -886,8 +898,6 @@ FreeBSD ()
     
 		if [ "$ch_m" == 1 ]
 		then 
-			sed -i '/sh \/opt\/vminit\/auto\.sh/d' /etc/profile
-			rm -f $0
 			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
     		elif [ "$ci_m" == 1 ]
 		then
@@ -957,11 +967,13 @@ EOF
 	hostname
 	datastore
 	network
+	dnsserver
 	password
 	restart_service
 
 }
 
+# For Ubuntu or Debian System
 
 Ubuntu ()
 {
@@ -1045,9 +1057,9 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 	{
 		if [ $DN_MOD ]
 		then
-        		dns1=`echo $DN_MOD | awk -F "," '{printf $1}'`
-                	dns2=`echo $DN_MOD | awk -F "," '{printf $2}'`
-                	dns3=`echo $DN_MOD | awk -F "," '{printf $3}'`
+        		dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
+                	dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
+                	dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
 
 			if [ $dns1 ]
 			then
@@ -1145,10 +1157,18 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 
 	restart_service ()
 	{
+		if [ "$ci_m" = 1 ]
+		then
+      service networking restart || ifdown -a;ifup -a
+			/sbin/resolvconf -u
+		fi
+			
 		if [ $(dpkg -l | grep -c ntp) -lt 2 ]
 		then
 			apt-get update
 			apt-get install -y ntp ntpdate
+			/etc/init.d/ntp stop
+			/usr/sbin/ntpdate 0.centos.pool.ntp.org && hwclock -w
 		fi
 		
 		if [ $(dpkg -l | grep -c sysv-rc-conf) -eq 0 ]
@@ -1160,14 +1180,8 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 		
 		if [ "$ch_m" = 1 ]
 		then
-			sed -i '/sh \/opt\/vminit\/auto\.sh/d' /etc/profile
-			rm -f $0
 			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
-    		elif [ "$ci_m" = 1 ]
-		then
-        		service networking restart || ifdown -a;ifup -a
-			/sbin/resolvconf -u
-    		fi
+    fi
 
 		echo "service restarted success" !
 	}
@@ -1214,7 +1228,7 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
                         
                         
                 else
-                        if [ -b /dev/sdb1 ] && [ $(mount | grep '/data' | grep -c 'sdb1') -eq 0 ]
+                        if [ -b /dev/sdb1 ] && [ $(mount | grep -c 'sdb1') -eq 0 ]
                         then
                                 [ -d /data ] || mkdir /data
                                 mount /dev/sdb1 /data && "mount /dev/sdb1 disk success" !
@@ -1308,7 +1322,7 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 		
 		if [ -f /var/cache/apt/archives/lock ]
 		then
-			fm -f /var/cache/apt/archives/lock
+			rm -f /var/cache/apt/archives/lock
 		fi
 		
 		if [ $(dpkg -l | grep -c -i nyterminal) -eq 0 ]
@@ -1465,9 +1479,9 @@ openSUSE ()
 	{
 		if [ ! $DN_MOD == "" ]
 		then
-        		dns1=`echo $DN_MOD | awk -F "," '{printf $1}'`
-                	dns2=`echo $DN_MOD | awk -F "," '{printf $2}'`
-                	dns3=`echo $DN_MOD | awk -F "," '{printf $3}'`
+        		dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
+                	dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
+                	dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
 
                 	if [ ! $dns1 == "" ] && [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 1p | grep -c $dns1) -eq 0 ]
 			then
@@ -1558,18 +1572,16 @@ openSUSE ()
 	
 	restart_service ()
 	{
-		if [ "$ch_m" = 1 ]
-		then
-			sed -i '/sh \/opt\/vminit\/auto\.sh/d' /etc/profile
-			rm -f $0
-			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
-		fi
-
 		if [ "$ci_m" = 1 ]
 		then
 			/etc/init.d/network restart
 		fi
 
+		if [ "$ch_m" = 1 ]
+		then
+			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
+		fi
+		
 		echo "restart service success" !
 	}
 	
@@ -1699,6 +1711,7 @@ openSUSE ()
 	
 	hostname
 	network
+	dnsserver
 	password
 	datastore
 	restart_service
@@ -1710,7 +1723,11 @@ enrpsrfs()
 	if [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | grep -c -i 'opensuse') -ge 1 ]
 	then
 		localfile=/etc/init.d/boot.local
-	else
+	elif [ -f /etc/redhat-release ]
+	then
+		localfile=/etc/rc.d/rc.local
+	elif [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | egrep -c -i 'ubuntu|debian') -ge 1 ]
+	then
 		localfile=/etc/rc.local
 	fi
 	
@@ -1742,39 +1759,38 @@ enrpsrfs()
 }
 
 
-main ()
-{
-	plaver=`uname -s`
+# Starting run
 
-	case $plaver in
-	Linux)
-					enrpsrfs
+plaver=`uname -s`
+
+case $plaver in
+
+Linux)
+   enrpsrfs
 					
-        	if [ -f /etc/redhat-release ]
-        	then
-                	CentOS
-        	elif [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | egrep -c -i 'ubuntu|debian') -ge 1 ]
-        	then
-                	Ubuntu
-          elif [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | grep -c -i 'opensuse') -ge 1 ]
-          then
-          				openSUSE
-					else
-									echo "error,This Linux System is not supported" !!
-					fi
+   if [ -f /etc/redhat-release ]
+   then
+      CentOS
+   elif [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | egrep -c -i 'ubuntu|debian') -ge 1 ]
+   then
+      Ubuntu
+   elif [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | grep -c -i 'opensuse') -ge 1 ]
+   then
+      openSUSE
+	 else
+			echo "error,This System is not supported" !!
+   fi
 					
-	;;
-	FreeBSD)
-                FreeBSD
-	;;
-	*)
-                echo "error,This platform is not supported" !!
-	;;
-	esac
-}
+;;
+FreeBSD)
+   FreeBSD
 
+;;
+*)
+   echo "error,This platform is not supported" !!
 
-main
+;;
+esac
 
 rm -f $tmp
 

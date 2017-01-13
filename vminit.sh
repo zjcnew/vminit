@@ -1,11 +1,10 @@
 #!/bin/sh
 # Target: Automatic configuration hostname,password,network,datastore for hosts
 # Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
-# Update content: update dns configure for centos
-# Update date: 2017/1/12
+# Update date: 2017/1/13
 # Author: niaoyun.com
 # Tel: 400-688-3065
-# Version: 1.75
+# Version: 1.78
 
 HN_MOD={HN_MOD}		# hostname
 PS_MOD={PS_MOD}		# password
@@ -24,6 +23,7 @@ FM_MOD={FM_MOD}		# whether partition
 #DN_MOD=202.96.134.133,114.114.114.114
 #FM_MOD=YES
 
+
 # system parameter
 
 ch_m=0
@@ -33,9 +33,11 @@ log=$home/vminit.log
 tmp=$home/vminit.tmp
 auto_tmp=$home/autovm.tmp
 
-# Starting run
+
 exec 1>$log 2>&1
 echo "$(date '+%Y-%m-%d %H:%M:%S')  vminit script starting run" !
+
+# For CentOS or Red Hat System
 
 CentOS ()
 {
@@ -432,17 +434,19 @@ CentOS ()
 
 			if [ -b /dev/sdb1 ] && [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
 			then
-				[ -d /data ] || mkdir /data
-				mount /dev/sdb1 /data && "mount /dev/sdb1 disk success" !
+			  if [ $(mount | grep -c 'sdb1') -eq 0 ]
+			  then
+				   [ -d /data ] || mkdir /data
+				   mount /dev/sdb1 /data && "mount /dev/sdb1 disk success" !
 
-				if [ $(mount | grep -c 'sdb1') -ge 1 ]
-				then
-					sed -i '/sdb1/d' /etc/fstab
-		filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
-
-			echo "/dev/sdb1               /data                   $filesystem    defaults        0 0" >> /etc/fstab
-				else
-					echo "mount /dev/sdb1 disk failed" !
+				   if [ $(mount | grep -c 'sdb1') -ge 1 ]
+				   then
+					    sed -i '/sdb1/d' /etc/fstab
+		          filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+			        echo "/dev/sdb1               /data                   $filesystem    defaults        0 0" >> /etc/fstab
+				   else
+					    echo "mount /dev/sdb1 disk failed" !
+				   fi
 				fi
 			else
 				echo "can not find correct filesystem on /dev/sdb1" !!
@@ -595,6 +599,7 @@ CentOS ()
 	dnsserver
 }
 
+# For FreeBSD System
 
 FreeBSD ()
 {
@@ -915,6 +920,7 @@ EOF
 
 }
 
+# For Ubuntu or Debian System
 
 Ubuntu ()
 {
@@ -1169,7 +1175,7 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
                         
                         
                 else
-                        if [ -b /dev/sdb1 ] && [ $(mount | grep '/data' | grep -c 'sdb1') -eq 0 ]
+                        if [ -b /dev/sdb1 ] && [ $(mount | grep -c 'sdb1') -eq 0 ]
                         then
                                 [ -d /data ] || mkdir /data
                                 mount /dev/sdb1 /data && "mount /dev/sdb1 disk success" !
@@ -1700,39 +1706,38 @@ enrpsrfs()
 }
 
 
-main ()
-{
-	plaver=`uname -s`
+# Starting run
 
-	case $plaver in
-	Linux)
-					enrpsrfs
+plaver=`uname -s`
+
+case $plaver in
+
+Linux)
+   enrpsrfs
 					
-        	if [ -f /etc/redhat-release ]
-        	then
-                	CentOS
-        	elif [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | egrep -c -i 'ubuntu|debian') -ge 1 ]
-        	then
-                	Ubuntu
-          elif [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | grep -c -i 'opensuse') -ge 1 ]
-          then
-          				openSUSE
-					else
-									echo "error,This Linux System is not supported" !!
-					fi
+   if [ -f /etc/redhat-release ]
+   then
+      CentOS
+   elif [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | egrep -c -i 'ubuntu|debian') -ge 1 ]
+   then
+      Ubuntu
+   elif [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | grep -c -i 'opensuse') -ge 1 ]
+   then
+      openSUSE
+	 else
+			echo "error,This System is not supported" !!
+   fi
 					
-	;;
-	FreeBSD)
-                FreeBSD
-	;;
-	*)
-                echo "error,This platform is not supported" !!
-	;;
-	esac
-}
+;;
+FreeBSD)
+   FreeBSD
 
+;;
+*)
+   echo "error,This platform is not supported" !!
 
-main
+;;
+esac
 
 rm -f $tmp
 
