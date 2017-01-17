@@ -1,10 +1,10 @@
 #!/bin/sh
 # Target: Automatic configuration hostname,password,network,datastore for hosts
 # Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
-# Update date: 2017/1/13
+# Update date: 2017/1/17
 # Author: niaoyun.com
 # Tel: 400-688-3065
-# Version: 1.78
+# Version: 1.83
 
 HN_MOD={HN_MOD}		# hostname
 PS_MOD={PS_MOD}		# password
@@ -330,52 +330,12 @@ CentOS ()
 
 	restart_service ()
 	{
-		if [ "$ci_m" = 1 ]
+		if [ "$ci_m" -eq 1 ]
 		then
 			/etc/init.d/network restart
 		fi
 		
-		if [ $(uname -r | awk -F'-' '{ print $1 }') == "3.10.0" ]
-		then
-			if [ $(rpm -qa | grep -c ^ntp) -ge 1 ]
-			then
-				rpm -e ntp && echo "ntp package uninstall success" !
-				rpm -e ntpdate && echo "ntpdate package uninstall success" !
-			fi
-			
-			if [ $(rpm -qa | grep -c ^chrony) -eq 0 ]
-			then
-				yum install chrony -y
-			fi
-			
-			systemctl enable chronyd
-		
-		elif [ $(uname -r | awk -F'-' '{ print $1 }') == "2.6.18" ]
-		then
-			if [ $(rpm -qa | grep -c ^ntp) -eq 0 ]
-			then
-				yum install ntp -y
-				/etc/init.d/ntpd stop
-				/sbin/ntpdate 0.centos.pool.ntp.org &&  hwclock -w
-			fi
-			
-				chkconfig ntpd on
-				
-		elif [ $(uname -r | awk -F'-' '{ print $1 }') == "2.6.32" ]
-		then
-			if [ $(rpm -qa | grep -c ^ntp) -lt 2 ]
-			then
-				yum install ntp ntpdate -y
-				/etc/init.d/ntpd stop
-				/usr/sbin/ntpdate 0.centos.pool.ntp.org && hwclock -w
-			fi
-			
-			chkconfig ntpd on
-			chkconfig ntpdate on
-			
-		fi
-		
-		if [ "$ch_m" = 1 ]
+		if [ "$ch_m" -eq 1 ]
 		then
 			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
 		fi
@@ -399,7 +359,7 @@ CentOS ()
 			filesystem="ext4"
 		fi
 
-		if [ "${FM_MOD}" == "YES" ]
+		if [ "$FM_MOD" == "YES" ]
 		then
 			if [ -b /dev/sdb ]
 			then
@@ -829,21 +789,8 @@ FreeBSD ()
 
 	restart_service ()
 	{
-		if [ $(grep '^ntpd_enable' /etc/rc.conf | grep -c 'YES') -eq 0 ]
-		then
-			sed -e "/ntpd_enable/d" /etc/rc.conf > $tmp
-      echo ntpd_enable=\"YES\" >> $tmp
-      cat $tmp > /etc/rc.conf
-    fi
     
-  	if [ $(grep '^ntpdate_enable' /etc/rc.conf | grep -c 'YES') -eq 0 ]
-  	then
-  		sed -e "/ntpdate_enable/d" /etc/rc.conf > $tmp
-  		echo ntpdate_enable=\"YES\" >> $tmp
-      cat $tmp > /etc/rc.conf
-    fi
-    
-		if [ "$ch_m" == 1 ]
+		if [ "$ch_m" -eq 1 ]
 		then 
 			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
     		elif [ "$ci_m" == 1 ]
@@ -893,7 +840,7 @@ EOF
 
 	datastore ()
 	{
-		if [ $(mount | grep -c '/data') -eq 0 ] && [ -c /dev/da1 ] && [ "${FM_MOD}" = "YES" ]
+		if [ $(mount | grep -c '/data') -eq 0 ] && [ -c /dev/da1 ] && [ "$FM_MOD" = "YES" ]
 		then
 			if [ $(grep -c '^zfs_enable'  /etc/rc.conf) -eq 0 ]
 			then
@@ -1104,26 +1051,11 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 
 	restart_service ()
 	{
-		if [ "$ci_m" = 1 ]
+		if [ "$ci_m" -eq 1 ]
 		then
       service networking restart || ifdown -a;ifup -a
 			/sbin/resolvconf -u
 		fi
-			
-		if [ $(dpkg -l | grep -c ntp) -lt 2 ]
-		then
-			apt-get update
-			apt-get install -y ntp ntpdate
-			/etc/init.d/ntp stop
-			/usr/sbin/ntpdate 0.centos.pool.ntp.org && hwclock -w
-		fi
-		
-		if [ $(dpkg -l | grep -c sysv-rc-conf) -eq 0 ]
-		then
-			apt-get install -y sysv-rc-conf
-		fi
-		
-		sysv-rc-conf ntp on
 		
 		if [ "$ch_m" = 1 ]
 		then
@@ -1138,13 +1070,13 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
         {
                 filesystem="ext4"
 
-                if [ "${FM_MOD}" = "YES" ]
+                if [ "$FM_MOD" = "YES" ]
                 then
                         if [ -b /dev/sdb1 ]
                         then
                                 if [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
                                 then
-                       	filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+                       									filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
                                 else
                                         [ -b /dev/sdb1 ] && /sbin/parted -s /dev/sdb rm 1
                                         /sbin/parted -s /dev/sdb mklabel msdos
@@ -1167,7 +1099,7 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
                                 if [ $(mount | grep -c 'sdb1') -ge 1 ]
                                 then
                                         sed -i '/sdb1/d' /etc/fstab
-               	echo "/dev/sdb1                       /data           $filesystem    defaults        0       0" >> /etc/fstab
+               													echo "/dev/sdb1                       /data           $filesystem    defaults        0       0" >> /etc/fstab
                                 else
                                         echo "mount /dev/sdb1 disk failed" !
                                 fi
@@ -1175,17 +1107,20 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
                         
                         
                 else
-                        if [ -b /dev/sdb1 ] && [ $(mount | grep -c 'sdb1') -eq 0 ]
+
+                        if [ $(mount | grep -c 'sdb1') -eq 0 ]
                         then
                                 [ -d /data ] || mkdir /data
-                                mount /dev/sdb1 /data && "mount /dev/sdb1 disk success" !
-                        filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+                                mount /dev/sdb1 /data && echo "mount /dev/sdb1 disk success" !
+                        				filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
 
-                                if [ $(mount | grep -c 'sdb1') -eq 0 ]
+                                if [ $(mount | grep -c 'sdb1') -ge 1 ]
                                 then
                                         sed -i '/sdb1/d' /etc/fstab
-           echo "/dev/sdb1                                 /data           $filesystem    defaults        0       0" >> /etc/fstab
+           															echo "/dev/sdb1                                 /data           $filesystem    defaults        0       0" >> /etc/fstab
                                 fi
+                      
+                                
                         fi
 
                 fi
@@ -1519,12 +1454,12 @@ openSUSE ()
 	
 	restart_service ()
 	{
-		if [ "$ci_m" = 1 ]
+		if [ "$ci_m" -eq 1 ]
 		then
 			/etc/init.d/network restart
 		fi
 
-		if [ "$ch_m" = 1 ]
+		if [ "$ch_m" -eq 1 ]
 		then
 			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
 		fi
@@ -1534,7 +1469,7 @@ openSUSE ()
 	
 	datastore ()
 	{
-		if [ "${FM_MOD}" == "YES" ]
+		if [ "$FM_MOD" == "YES" ]
 		then
 			filesystem="ext4"
 			if [ -b /dev/sdb ]
