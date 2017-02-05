@@ -1,10 +1,10 @@
 #!/bin/sh
 # Target: Automatic configuration hostname,password,network,datastore for hosts
 # Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
-# Update date: 2017/1/17
+# Update date: 2017/1/18
 # Author: niaoyun.com
 # Tel: 400-688-3065
-# Version: 1.83
+# Version: 1.85
 
 HN_MOD={HN_MOD}		# hostname
 PS_MOD={PS_MOD}		# password
@@ -1478,17 +1478,17 @@ openSUSE ()
 				then
 					if [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
 					then
-	filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+						filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
 					else
 						[ -b /dev/sdb1 ] && /sbin/parted -s /dev/sdb rm 1
-						 /usr/sbin/parted -s /dev/sdb mklabel msdos
+						/usr/sbin/parted -s /dev/sdb mklabel msdos
 						/usr/sbin/parted -s /dev/sdb mkpart primary 0% 100%
-            mkfs -t $filesystem /dev/sdb1 || mkfs -t $filesystem -f /dev/sdb1
+						mkfs -t $filesystem /dev/sdb1 || mkfs -t $filesystem -f /dev/sdb1
 					fi
 				else
-					 /usr/sbin/parted -s /dev/sdb mklabel msdos
+					/usr/sbin/parted -s /dev/sdb mklabel msdos
 					/usr/sbin/parted -s /dev/sdb mkpart primary 0% 100%
-          mkfs -t $filesystem /dev/sdb1 && sleep 10
+					mkfs -t $filesystem /dev/sdb1 && sleep 10
 					
 				fi
 
@@ -1501,25 +1501,32 @@ openSUSE ()
 					echo "mount /dev/sdb1 disk success" ! 
 				fi
 			fi
+			
 		else
 
-			if [ -b /dev/sdb1 ] && [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
-			then
-				[ -d /data ] || mkdir /data
-				mount /dev/sdb1 /data && "mount /dev/sdb1 disk success" !
-
-				if [ $(mount | grep -c 'sdb1') -ge 1 ]
+			if [ $(mount | grep -c 'sdb1') -eq 0 ]
+			then			
+				if [ -b /dev/sdb1 ] && [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
 				then
-					sed -i '/sdb1/d' /etc/fstab
-		filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+					[ -d /data ] || mkdir /data
+					mount /dev/sdb1 /data && "mount /dev/sdb1 disk success" !
 
-				echo "/dev/sdb1            /data                $filesystem       defaults              0 0" >> /etc/fstab
+					if [ $(mount | grep -c 'sdb1') -ge 1 ]
+					then
+						sed -i '/sdb1/d' /etc/fstab
+						filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+						echo "/dev/sdb1            /data                $filesystem       defaults              0 0" >> /etc/fstab
+						echo "write into fstab file success"!
+					else
+						echo "mount /dev/sdb1 disk failed,and not write into fstab file" !!
+					fi
 				else
-					echo "mount /dev/sdb1 disk failed" !
-				fi
+					echo "/dev/sdb1 is not exist,or not a valid file system"!!
+				fi	
 			else
-				echo "can not find correct filesystem on /dev/sdb1" !!
+				echo "/dev/sdb1 is already mount,nothing to do" !!
 			fi
+			
 		fi
 	}
 	

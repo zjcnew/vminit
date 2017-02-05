@@ -1,4 +1,4 @@
-﻿vminit v1.78 [![Build Status](https://img.shields.io/travis/rust-lang/rust/master.svg?branch=master)](https://github.com/zjcnew/vminit) [![QQ-619877197](https://img.shields.io/badge/QQ-619877197-red.svg?qq=619877197)](tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=619877197)
+﻿vminit v1.83 [![Build Status](https://img.shields.io/travis/rust-lang/rust/master.svg?branch=master)](https://github.com/zjcnew/vminit) [![QQ-619877197](https://img.shields.io/badge/QQ-619877197-red.svg?qq=619877197)](tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=619877197)
 ========================
 使用Shell编写的支持VMware Workstation虚拟机针对Linux系统实现自动化配置，支持CentOS、Red Hat、openSuSE、Ubuntu、Debian、FreeBSD系统！
 
