@@ -1,10 +1,10 @@
 #!/bin/sh
-# Target: Automatic configuration hostname,password,network,datastore for hosts
+# Target: Automatic configuration hostname,password,network,datastore and install cloudsafe client for VMware virtual machine.
 # Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
-# Update date: 2017/1/18
+# Update date: 2017/2/27
 # Author: niaoyun.com
 # Tel: 400-688-3065
-# Version: 1.85
+# Version: 1.86
 
 HN_MOD={HN_MOD}		# hostname
 PS_MOD={PS_MOD}		# password
@@ -475,31 +475,31 @@ CentOS ()
                         fi
 		fi
 
-		if [ -f /mnt/cdrom/nyterminal* ]
+		if [ -f /mnt/cdrom/cloudsafe* ]
 		then
-			rm -f $home/nyterminal*
+			rm -f $home/cloudsafe*
 
 			if [ $(uname -i) == "x86_64" ]
 			then
-				cp /mnt/cdrom/nyterminal*.x86_64.rpm $home/
+				cp /mnt/cdrom/cloudsafe*.x86_64.rpm $home/
 			elif [ $(uname -i) == "i386" ]
 			then
-				cp /mnt/cdrom/nyterminal*.i686.rpm $home/
+				cp /mnt/cdrom/cloudsafe*.i686.rpm $home/
 			fi
 
-			if [ $(rpm -qa | grep -c nyterminal) -eq 0 ]
+			if [ $(rpm -qa | grep -c cloudsafe) -eq 0 ]
                 	then
-                       		rpm -vih $home/nyterminal*.rpm
+                       		rpm -vih $home/cloudsafe*.rpm
                 	else
-                     		if [ `find $home -name nyterminal*.rpm | grep -c $(rpm -qa | grep nyterminal)` -eq 0 ]
+                     		if [ `find $home -name cloudsafe*.rpm | grep -c $(rpm -qa | grep cloudsafe)` -eq 0 ]
                        		then
-                                	rpm -e nyterminal
-                               		rpm -vih $home/nyterminal*.rpm
+                                	rpm -e cloudsafe
+                               		rpm -vih $home/cloudsafe*.rpm
                        		fi
 			fi
                	fi
 
-		if [ $(ps -fel | grep -v grep | grep -c -i nyterminal) -eq 0 ]
+		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -eq 0 ]
 		then
 			/etc/init.d/nyServerd start
 			/etc/init.d/nyGuardd start
@@ -1185,11 +1185,11 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
                 fi
 
 
-                if [ -f /mnt/cdrom/nyterminal* ]
+                if [ -f /mnt/cdrom/cloudsafe* ]
                 then
-                	rm -f $home/nyterminal*
+                	rm -f $home/cloudsafe*
 
-                        cp /mnt/cdrom/nyterminal*.amd64.deb $home/
+                        cp /mnt/cdrom/cloudsafe*.amd64.deb $home/
 
                 fi
 		if [ -f /var/lib/dpkg/lock ]
@@ -1207,19 +1207,19 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 			rm -f /var/cache/apt/archives/lock
 		fi
 		
-		if [ $(dpkg -l | grep -c -i nyterminal) -eq 0 ]
+		if [ $(dpkg -l | grep -c -i cloudsafe) -eq 0 ]
 		then
-			echo "nyterminal packages not install"!
-			dpkg -i $home/nyterminal*.deb
+			echo "cloudsafe packages not install"!
+			dpkg -i $home/cloudsafe*.deb
 		else
-			if [ `dpkg -l | grep nyterminal | grep -c $(dpkg --info $home/nyterminal*.deb | grep 'Version' | awk '{ print $2 }')` -eq 0 ]
+			if [ `dpkg -l | grep cloudsafe | grep -c $(dpkg --info $home/cloudsafe*.deb | grep 'Version' | awk '{ print $2 }')` -eq 0 ]
 			then
-				dpkg -P nyterminal
-				dpkg -i $home/nyterminal*.deb
+				dpkg -P cloudsafe
+				dpkg -i $home/cloudsafe*.deb
 			fi
 		fi
 
-		if [ $(ps -fel | grep -v grep | grep -c -i nyterminal) -eq 0 ]
+		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -eq 0 ]
                 then
                         /etc/init.d/nyServerd start
                         /etc/init.d/nyGuardd start

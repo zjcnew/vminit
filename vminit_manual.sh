@@ -1,12 +1,13 @@
 #!/bin/sh
-# Target: Manual configuration hostname,password,network,datastore for hosts
-# Application platform: CentOS RedHat FreeBSD Ubuntu Debian OpenSUSE
-# Update date: 2017/1/13
+# Target: Manual configuration hostname,password,network,datastore and install cloudsafe client for VMware virtual machine.
+# Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
+# Update date: 2017/2/27
 # Author: niaoyun.com
 # Tel: 400-688-3065
-# Version: 1.66
+# Version: 1.86
 
 # system parameter
+
 ch_m=0
 ci_m=0
 home="/opt/vminit"
@@ -86,6 +87,7 @@ if [ ! "$Password" ];then
 else
         PS_MOD=$Password
 fi
+
 
 exec 1>$log 2>&1
 echo "$(date '+%Y-%m-%d %H:%M:%S')  vminit script starting run" !
@@ -383,52 +385,12 @@ CentOS ()
 
 	restart_service ()
 	{
-		if [ "$ci_m" = 1 ]
+		if [ "$ci_m" -eq 1 ]
 		then
 			/etc/init.d/network restart
 		fi
 		
-		if [ $(uname -r | awk -F'-' '{ print $1 }') == "3.10.0" ]
-		then
-			if [ $(rpm -qa | grep -c ^ntp) -ge 1 ]
-			then
-				rpm -e ntp && echo "ntp package uninstall success" !
-				rpm -e ntpdate && echo "ntpdate package uninstall success" !
-			fi
-			
-			if [ $(rpm -qa | grep -c ^chrony) -eq 0 ]
-			then
-				yum install chrony -y
-			fi
-			
-			systemctl enable chronyd
-		
-		elif [ $(uname -r | awk -F'-' '{ print $1 }') == "2.6.18" ]
-		then
-			if [ $(rpm -qa | grep -c ^ntp) -eq 0 ]
-			then
-				yum install ntp -y
-				/etc/init.d/ntpd stop
-				/sbin/ntpdate 0.centos.pool.ntp.org &&  hwclock -w
-			fi
-			
-				chkconfig ntpd on
-				
-		elif [ $(uname -r | awk -F'-' '{ print $1 }') == "2.6.32" ]
-		then
-			if [ $(rpm -qa | grep -c ^ntp) -lt 2 ]
-			then
-				yum install ntp ntpdate -y
-				/etc/init.d/ntpd stop
-				/usr/sbin/ntpdate 0.centos.pool.ntp.org && hwclock -w
-			fi
-			
-			chkconfig ntpd on
-			chkconfig ntpdate on
-			
-		fi
-		
-		if [ "$ch_m" = 1 ]
+		if [ "$ch_m" -eq 1 ]
 		then
 			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
 		fi
@@ -452,7 +414,7 @@ CentOS ()
 			filesystem="ext4"
 		fi
 
-		if [ "${FM_MOD}" == "YES" ]
+		if [ "$FM_MOD" == "YES" ]
 		then
 			if [ -b /dev/sdb ]
 			then
@@ -568,31 +530,31 @@ CentOS ()
                         fi
 		fi
 
-		if [ -f /mnt/cdrom/nyterminal* ]
+		if [ -f /mnt/cdrom/cloudsafe* ]
 		then
-			rm -f $home/nyterminal*
+			rm -f $home/cloudsafe*
 
 			if [ $(uname -i) == "x86_64" ]
 			then
-				cp /mnt/cdrom/nyterminal*.x86_64.rpm $home/
+				cp /mnt/cdrom/cloudsafe*.x86_64.rpm $home/
 			elif [ $(uname -i) == "i386" ]
 			then
-				cp /mnt/cdrom/nyterminal*.i686.rpm $home/
+				cp /mnt/cdrom/cloudsafe*.i686.rpm $home/
 			fi
 
-			if [ $(rpm -qa | grep -c nyterminal) -eq 0 ]
+			if [ $(rpm -qa | grep -c cloudsafe) -eq 0 ]
                 	then
-                       		rpm -vih $home/nyterminal*.rpm
+                       		rpm -vih $home/cloudsafe*.rpm
                 	else
-                     		if [ `find $home -name nyterminal*.rpm | grep -c $(rpm -qa | grep nyterminal)` -eq 0 ]
+                     		if [ `find $home -name cloudsafe*.rpm | grep -c $(rpm -qa | grep cloudsafe)` -eq 0 ]
                        		then
-                                	rpm -e nyterminal
-                               		rpm -vih $home/nyterminal*.rpm
+                                	rpm -e cloudsafe
+                               		rpm -vih $home/cloudsafe*.rpm
                        		fi
 			fi
                	fi
 
-		if [ $(ps -fel | grep -v grep | grep -c -i nyterminal) -eq 0 ]
+		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -eq 0 ]
 		then
 			/etc/init.d/nyServerd start
 			/etc/init.d/nyGuardd start
@@ -882,21 +844,8 @@ FreeBSD ()
 
 	restart_service ()
 	{
-		if [ $(grep '^ntpd_enable' /etc/rc.conf | grep -c 'YES') -eq 0 ]
-		then
-			sed -e "/ntpd_enable/d" /etc/rc.conf > $tmp
-      echo ntpd_enable=\"YES\" >> $tmp
-      cat $tmp > /etc/rc.conf
-    fi
     
-  	if [ $(grep '^ntpdate_enable' /etc/rc.conf | grep -c 'YES') -eq 0 ]
-  	then
-  		sed -e "/ntpdate_enable/d" /etc/rc.conf > $tmp
-  		echo ntpdate_enable=\"YES\" >> $tmp
-      cat $tmp > /etc/rc.conf
-    fi
-    
-		if [ "$ch_m" == 1 ]
+		if [ "$ch_m" -eq 1 ]
 		then 
 			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
     		elif [ "$ci_m" == 1 ]
@@ -946,7 +895,7 @@ EOF
 
 	datastore ()
 	{
-		if [ $(mount | grep -c '/data') -eq 0 ] && [ -c /dev/da1 ] && [ "${FM_MOD}" = "YES" ]
+		if [ $(mount | grep -c '/data') -eq 0 ] && [ -c /dev/da1 ] && [ "$FM_MOD" = "YES" ]
 		then
 			if [ $(grep -c '^zfs_enable'  /etc/rc.conf) -eq 0 ]
 			then
@@ -1157,26 +1106,11 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 
 	restart_service ()
 	{
-		if [ "$ci_m" = 1 ]
+		if [ "$ci_m" -eq 1 ]
 		then
       service networking restart || ifdown -a;ifup -a
 			/sbin/resolvconf -u
 		fi
-			
-		if [ $(dpkg -l | grep -c ntp) -lt 2 ]
-		then
-			apt-get update
-			apt-get install -y ntp ntpdate
-			/etc/init.d/ntp stop
-			/usr/sbin/ntpdate 0.centos.pool.ntp.org && hwclock -w
-		fi
-		
-		if [ $(dpkg -l | grep -c sysv-rc-conf) -eq 0 ]
-		then
-			apt-get install -y sysv-rc-conf
-		fi
-		
-		sysv-rc-conf ntp on
 		
 		if [ "$ch_m" = 1 ]
 		then
@@ -1191,13 +1125,13 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
         {
                 filesystem="ext4"
 
-                if [ "${FM_MOD}" = "YES" ]
+                if [ "$FM_MOD" = "YES" ]
                 then
                         if [ -b /dev/sdb1 ]
                         then
                                 if [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
                                 then
-                       	filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+                       									filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
                                 else
                                         [ -b /dev/sdb1 ] && /sbin/parted -s /dev/sdb rm 1
                                         /sbin/parted -s /dev/sdb mklabel msdos
@@ -1220,7 +1154,7 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
                                 if [ $(mount | grep -c 'sdb1') -ge 1 ]
                                 then
                                         sed -i '/sdb1/d' /etc/fstab
-               	echo "/dev/sdb1                       /data           $filesystem    defaults        0       0" >> /etc/fstab
+               													echo "/dev/sdb1                       /data           $filesystem    defaults        0       0" >> /etc/fstab
                                 else
                                         echo "mount /dev/sdb1 disk failed" !
                                 fi
@@ -1228,17 +1162,20 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
                         
                         
                 else
-                        if [ -b /dev/sdb1 ] && [ $(mount | grep -c 'sdb1') -eq 0 ]
+
+                        if [ $(mount | grep -c 'sdb1') -eq 0 ]
                         then
                                 [ -d /data ] || mkdir /data
-                                mount /dev/sdb1 /data && "mount /dev/sdb1 disk success" !
-                        filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+                                mount /dev/sdb1 /data && echo "mount /dev/sdb1 disk success" !
+                        				filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
 
-                                if [ $(mount | grep -c 'sdb1') -eq 0 ]
+                                if [ $(mount | grep -c 'sdb1') -ge 1 ]
                                 then
                                         sed -i '/sdb1/d' /etc/fstab
-           echo "/dev/sdb1                                 /data           $filesystem    defaults        0       0" >> /etc/fstab
+           															echo "/dev/sdb1                                 /data           $filesystem    defaults        0       0" >> /etc/fstab
                                 fi
+                      
+                                
                         fi
 
                 fi
@@ -1303,11 +1240,11 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
                 fi
 
 
-                if [ -f /mnt/cdrom/nyterminal* ]
+                if [ -f /mnt/cdrom/cloudsafe* ]
                 then
-                	rm -f $home/nyterminal*
+                	rm -f $home/cloudsafe*
 
-                        cp /mnt/cdrom/nyterminal*.amd64.deb $home/
+                        cp /mnt/cdrom/cloudsafe*.amd64.deb $home/
 
                 fi
 		if [ -f /var/lib/dpkg/lock ]
@@ -1325,19 +1262,19 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 			rm -f /var/cache/apt/archives/lock
 		fi
 		
-		if [ $(dpkg -l | grep -c -i nyterminal) -eq 0 ]
+		if [ $(dpkg -l | grep -c -i cloudsafe) -eq 0 ]
 		then
-			echo "nyterminal packages not install"!
-			dpkg -i $home/nyterminal*.deb
+			echo "cloudsafe packages not install"!
+			dpkg -i $home/cloudsafe*.deb
 		else
-			if [ `dpkg -l | grep nyterminal | grep -c $(dpkg --info $home/nyterminal*.deb | grep 'Version' | awk '{ print $2 }')` -eq 0 ]
+			if [ `dpkg -l | grep cloudsafe | grep -c $(dpkg --info $home/cloudsafe*.deb | grep 'Version' | awk '{ print $2 }')` -eq 0 ]
 			then
-				dpkg -P nyterminal
-				dpkg -i $home/nyterminal*.deb
+				dpkg -P cloudsafe
+				dpkg -i $home/cloudsafe*.deb
 			fi
 		fi
 
-		if [ $(ps -fel | grep -v grep | grep -c -i nyterminal) -eq 0 ]
+		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -eq 0 ]
                 then
                         /etc/init.d/nyServerd start
                         /etc/init.d/nyGuardd start
@@ -1572,12 +1509,12 @@ openSUSE ()
 	
 	restart_service ()
 	{
-		if [ "$ci_m" = 1 ]
+		if [ "$ci_m" -eq 1 ]
 		then
 			/etc/init.d/network restart
 		fi
 
-		if [ "$ch_m" = 1 ]
+		if [ "$ch_m" -eq 1 ]
 		then
 			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
 		fi
@@ -1587,7 +1524,7 @@ openSUSE ()
 	
 	datastore ()
 	{
-		if [ "${FM_MOD}" == "YES" ]
+		if [ "$FM_MOD" == "YES" ]
 		then
 			filesystem="ext4"
 			if [ -b /dev/sdb ]
@@ -1596,17 +1533,17 @@ openSUSE ()
 				then
 					if [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
 					then
-	filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+						filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
 					else
 						[ -b /dev/sdb1 ] && /sbin/parted -s /dev/sdb rm 1
-						 /usr/sbin/parted -s /dev/sdb mklabel msdos
+						/usr/sbin/parted -s /dev/sdb mklabel msdos
 						/usr/sbin/parted -s /dev/sdb mkpart primary 0% 100%
-            mkfs -t $filesystem /dev/sdb1 || mkfs -t $filesystem -f /dev/sdb1
+						mkfs -t $filesystem /dev/sdb1 || mkfs -t $filesystem -f /dev/sdb1
 					fi
 				else
-					 /usr/sbin/parted -s /dev/sdb mklabel msdos
+					/usr/sbin/parted -s /dev/sdb mklabel msdos
 					/usr/sbin/parted -s /dev/sdb mkpart primary 0% 100%
-          mkfs -t $filesystem /dev/sdb1 && sleep 10
+					mkfs -t $filesystem /dev/sdb1 && sleep 10
 					
 				fi
 
@@ -1619,25 +1556,32 @@ openSUSE ()
 					echo "mount /dev/sdb1 disk success" ! 
 				fi
 			fi
+			
 		else
 
-			if [ -b /dev/sdb1 ] && [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
-			then
-				[ -d /data ] || mkdir /data
-				mount /dev/sdb1 /data && "mount /dev/sdb1 disk success" !
-
-				if [ $(mount | grep -c 'sdb1') -ge 1 ]
+			if [ $(mount | grep -c 'sdb1') -eq 0 ]
+			then			
+				if [ -b /dev/sdb1 ] && [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
 				then
-					sed -i '/sdb1/d' /etc/fstab
-		filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+					[ -d /data ] || mkdir /data
+					mount /dev/sdb1 /data && "mount /dev/sdb1 disk success" !
 
-				echo "/dev/sdb1            /data                $filesystem       defaults              0 0" >> /etc/fstab
+					if [ $(mount | grep -c 'sdb1') -ge 1 ]
+					then
+						sed -i '/sdb1/d' /etc/fstab
+						filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+						echo "/dev/sdb1            /data                $filesystem       defaults              0 0" >> /etc/fstab
+						echo "write into fstab file success"!
+					else
+						echo "mount /dev/sdb1 disk failed,and not write into fstab file" !!
+					fi
 				else
-					echo "mount /dev/sdb1 disk failed" !
-				fi
+					echo "/dev/sdb1 is not exist,or not a valid file system"!!
+				fi	
 			else
-				echo "can not find correct filesystem on /dev/sdb1" !!
+				echo "/dev/sdb1 is already mount,nothing to do" !!
 			fi
+			
 		fi
 	}
 	
