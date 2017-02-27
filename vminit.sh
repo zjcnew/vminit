@@ -4,7 +4,7 @@
 # Update date: 2017/2/27
 # Author: niaoyun.com
 # Tel: 400-688-3065
-# Version: 1.86
+# Version: 1.87
 
 HN_MOD={HN_MOD}		# hostname
 PS_MOD={PS_MOD}		# password
@@ -501,8 +501,8 @@ CentOS ()
 
 		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -eq 0 ]
 		then
-			/etc/init.d/nyServerd start
-			/etc/init.d/nyGuardd start
+			/etc/init.d/cloudSafed start
+			/etc/init.d/cloudGuardd start
 		fi
 
 		eject /dev/$cdrom
@@ -1221,8 +1221,8 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 
 		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -eq 0 ]
                 then
-                        /etc/init.d/nyServerd start
-                        /etc/init.d/nyGuardd start
+                        /etc/init.d/cloudSafed start
+                        /etc/init.d/cloudGuardd start
                 fi
 
 		eject /dev/$cdrom
@@ -1558,6 +1558,73 @@ openSUSE ()
 		fi
 	}
 	
+	nyinstall ()
+	{
+	
+		cdrom=`ls -l /dev/cdrom* | grep "/dev/cdrom" | awk -F "->" '{printf $2}' | sed 's/^[ \t]*//g' | sed 's/[ \t]*$//g' | awk -F " " '{printf $1}'`
+		
+        if [ $(mount  | grep $cdrom | grep -c '/mnt/cdrom') -eq 0 ]
+        then
+            umount /dev/$cdrom
+            mount /dev/$cdrom /mnt/cdrom && echo "mount cdrom success" !
+		fi
+
+		if [ $(rpm -qa | grep -c postgresql92-contrib) -eq 0 ]
+		then
+			zypper install -y postgresql92-contrib
+			[ $(rpm -qa | grep -c postgresql92-contrib) -eq 0 ] && echo "postgresql92-contrib install failed"!! && exit 1
+		fi
+		
+        if [ -f /mnt/cdrom/sysSetup.so ]
+		then
+			if [ -f /home/sysSetup.so ]
+            then
+                if [ ! $(cksum /home/sysSetup.so | awk '{ print $1 }') == $(cksum /mnt/cdrom/sysSetup.so | awk '{ print $1 }') ]
+				then
+                    rm -f /home/sysSetup.so
+                    cp /mnt/cdrom/sysSetup.so /home
+                fi
+			else
+				cp /mnt/cdrom/sysSetup.so /home
+            fi
+		fi
+
+		if [ -f /mnt/cdrom/cloudsafe* ]
+		then
+			rm -f $home/cloudsafe*
+
+			if [ $(uname -i) == "x86_64" ]
+			then
+				cp /mnt/cdrom/cloudsafe*.x86_64.rpm $home/
+			elif [ $(uname -i) == "i386" ]
+			then
+				cp /mnt/cdrom/cloudsafe*.i686.rpm $home/
+			fi
+
+			if [ $(rpm -qa | grep -c cloudsafe) -eq 0 ]
+            then
+                rpm -vih $home/cloudsafe*.rpm
+            else
+                if [ `find $home -name cloudsafe*.rpm | grep -c $(rpm -qa | grep cloudsafe)` -eq 0 ]
+                then
+                    rpm -e cloudsafe
+                    rpm -vih $home/cloudsafe*.rpm
+                fi
+			fi
+        fi
+
+		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -eq 0 ]
+		then
+			/etc/init.d/cloudSafed start
+			/etc/init.d/cloudGuardd start
+		fi
+
+		eject /dev/$cdrom
+	
+	
+	
+	}
+	
 	network ()
 	{
 		if [ ! "$IP_MOD" == "" ]
@@ -1603,6 +1670,7 @@ openSUSE ()
 	dnsserver
 	password
 	datastore
+	nyinstall
 	restart_service
 }
 
