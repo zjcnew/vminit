@@ -27,9 +27,9 @@ real_cdrom=`ls -l /dev/cdrom* | grep "/dev/cdrom" | awk -F "->" '{printf $2}' | 
 
 if [ -n "$real_cdrom" ]
 then
-    	mount "/dev/${real_cdrom}" "${mount_dir}" && echo "mounted cdrom success" !
+    mount "/dev/${real_cdrom}" "${mount_dir}" && echo "mounted cdrom success" !
 
-  if [ -f $mount_dir/$script ]
+	if [ -f $mount_dir/$script ]
 	then
 		if [ -f $home/$script ]
 		then
@@ -59,14 +59,15 @@ FreeBSD ()
 if [ -c /dev/cd0 ]
 then
 	mount -t cd9660 /dev/cd0 $mount_dir && echo "mount cdrom device success"
+	
 	if [ -f $mount_dir/$script ]
 	then
 		if [ -f $home/$script ]
 		then
-                	echo "PS_MOD_LAST=$(grep '^PS_MOD' $home/$script | awk -F'=' '{ print $2 }')" > $tmp
-                	rm -f $home/$script
+            echo "PS_MOD_LAST=$(grep '^PS_MOD' $home/$script | awk -F'=' '{ print $2 }')" > $tmp
+          	rm -f $home/$script
 		fi
-
+		
 		cp -f "$mount_dir/$script" "$home" && echo "copy vminit.sh file success" && umount $mount_dir
 		chmod 744 $home/$script
 		$home/$script

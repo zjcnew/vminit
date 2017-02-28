@@ -1,10 +1,10 @@
 #!/bin/sh
 # Target: Automatic configuration hostname,password,network,datastore and install cloudsafe client for VMware virtual machine.
 # Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
-# Update date: 2017/2/27
+# Update date: 2017/2/28
 # Author: niaoyun.com
 # Tel: 400-688-3065
-# Version: 1.87
+# Version: 1.88
 
 HN_MOD={HN_MOD}		# hostname
 PS_MOD={PS_MOD}		# password
@@ -46,28 +46,28 @@ CentOS ()
 	{
 		if [ $1 ]
 		then
-        		mod_date=`stat $1 | grep "^Modify" | awk -F. '{print $1}' | awk '{print $2$3}'| awk -F- '{print $1$2$3}'`
-        		mod_pre=`echo $mod_date | awk -F: '{print $1}'`
-        		mod_minute=`echo $mod_date | awk -F: '{print $2}'`
-        		now_pre=`date +%Y%m%d%H`
-        		now_minute=`date +%M`
+        	mod_date=`stat $1 | grep "^Modify" | awk -F. '{print $1}' | awk '{print $2$3}'| awk -F- '{print $1$2$3}'`
+        	mod_pre=`echo $mod_date | awk -F: '{print $1}'`
+        	mod_minute=`echo $mod_date | awk -F: '{print $2}'`
+        	now_pre=`date +%Y%m%d%H`
+        	now_minute=`date +%M`
 
-        		if [ $mod_pre == $now_pre ]
-        		then
-                		if [ $mod_minute == $now_minute ]
-                		then
-                        		mod=1
-                		elif [ $(expr $mod_minute + 1) == $now_minute ]
-                		then
-                        		mod=1
-                		else
-                        		mod=0
-                		fi
-        		else
-                		mod=0
-        		fi
+        	if [ $mod_pre == $now_pre ]
+        	then
+                if [ $mod_minute == $now_minute ]
+                then
+                    mod=1
+                elif [ $(expr $mod_minute + 1) == $now_minute ]
+                then
+                    mod=1
+                else
+                    mod=0
+                fi
+        	else
+                mod=0
+        	fi
 		else
-        		echo  "Error,No files have been specified" ! && exit 1
+        	echo  "Error,No files have been specified" ! && exit 1
 
 		fi
 	}
@@ -84,16 +84,16 @@ CentOS ()
 
 		local network_file=/etc/sysconfig/network-scripts/ifcfg-$1
 
-    if [ $(grep -c '^DNS' $network_file) -ge 1 ]
+		if [ $(grep -c '^DNS' $network_file) -ge 1 ]
 		then
 			sed -i '/DNS/d' $network_file
-   	fi
+		fi
 
 		if [ $(grep '^DEVICE' $network_file | grep -c "${1}") -eq 0 ] && [ ! "${1}" == "" ]
 		then
-        		sed -i '/DEVICE/d' $network_file
-        		echo DEVICE=${1} >> $network_file
-    fi
+        	sed -i '/DEVICE/d' $network_file
+        	echo DEVICE=${1} >> $network_file
+		fi
 
 		macaddress=`cat /sys/class/net/$1/address | tr '[a-z]' '[A-Z]'`
 
@@ -113,22 +113,22 @@ CentOS ()
 		if [ $(grep '^ONBOOT' $network_file | grep -c 'yes') -eq 0 ]
 		then
 			sed -i '/ONBOOT/d' $network_file
-		    	echo "ONBOOT=yes" >> $network_file
+		    echo "ONBOOT=yes" >> $network_file
 		fi
 
-    		if [ $(grep '^BOOTPROTO' $network_file | grep -c 'static') -eq 0 ]
+    	if [ $(grep '^BOOTPROTO' $network_file | grep -c 'static') -eq 0 ]
 		then
 			sed -i '/BOOTPROTO/d' $network_file
-    			echo "BOOTPROTO=static" >> $network_file
+    		echo "BOOTPROTO=static" >> $network_file
    		fi
 
 		if [ $(grep '^NM_CONTROLLED' $network_file | grep -c 'no') -eq 0 ]
 		then
 			sed -i '/NM_CONTROLLED/d' $network_file
-        		echo 'NM_CONTROLLED=no' >> $network_file
+        	echo 'NM_CONTROLLED=no' >> $network_file
  		fi
 
-    		if [ $(grep '^PEERDNS' $network_file | grep -c 'no') -eq 0 ]
+    	if [ $(grep '^PEERDNS' $network_file | grep -c 'no') -eq 0 ]
 		then
 			sed -i '/PEERDNS/d' $network_file
 			echo 'PEERDNS=no' >> $network_file
@@ -140,67 +140,67 @@ CentOS ()
 
 			if [ ! "${curr_ip}" == "" ]
 			then
-    				echo "${1}:current ipaddress is ${curr_ip}" !
+    			echo "${1}:current ipaddress is ${curr_ip}" !
 
 				if [ ! "${curr_ip}" == "${2}" ]
 				then
-        				sed -i '/IPADDR/d' $network_file
-        				echo IPADDR=${2} >> $network_file
-    					echo "configuration ipaddress for network interface $1 success" !
+        			sed -i '/IPADDR/d' $network_file
+        			echo IPADDR=${2} >> $network_file
+    				echo "configuration ipaddress for network interface $1 success" !
 				fi
 			else
-        			sed -i '/IPADDR/d' $network_file
+        		sed -i '/IPADDR/d' $network_file
 				echo IPADDR=${2} >> $network_file
-    				echo "configuration ipaddress for network interface $1 success" !
+    			echo "configuration ipaddress for network interface $1 success" !
 			fi
 				
-    		fi
+    	fi
 
-    		if [ ! "${3}" == "" ]
+    	if [ ! "${3}" == "" ]
 		then
-    			local curr_netmask=`grep '^NETMASK' $network_file | grep -oP '\d+\.\d+\.\d+\.\d+'`
+    		local curr_netmask=`grep '^NETMASK' $network_file | grep -oP '\d+\.\d+\.\d+\.\d+'`
 
 			if [ ! "${curr_netmask}" == "" ]
 			then
-    				echo "${1}:current netmask is ${curr_netmask}" !
+    			echo "${1}:current netmask is ${curr_netmask}" !
 
 				if [ ! "${curr_netmask}" == "${3}" ]
 				then
-       					sed -i '/NETMASK/d' $network_file
-       					echo NETMASK=${3} >> $network_file
-    					echo "configuration netmask for network interface $1 success" !
+       				sed -i '/NETMASK/d' $network_file
+       				echo NETMASK=${3} >> $network_file
+    				echo "configuration netmask for network interface $1 success" !
 				fi
 			else
-       				sed -i '/NETMASK/d' $network_file
-    				echo NETMASK=${3} >> $network_file
-    				echo "configuration netmask for network interface $1 success" !
+       			sed -i '/NETMASK/d' $network_file
+    			echo NETMASK=${3} >> $network_file
+    			echo "configuration netmask for network interface $1 success" !
 			fi
 		fi
 
-    		if [ ! "${4}" == "" ]
+    	if [ ! "${4}" == "" ]
 		then
-    			local curr_gateway=`grep '^GATEWAY' $network_file | grep -oP '\d+\.\d+\.\d+\.\d+'`
+    		local curr_gateway=`grep '^GATEWAY' $network_file | grep -oP '\d+\.\d+\.\d+\.\d+'`
 
 			if [ ! "${curr_gateway}" == "" ]
 			then
-    				echo "${1}:current gateway is ${curr_gateway}"
+    			echo "${1}:current gateway is ${curr_gateway}"
 
 				if [ ! "${curr_gateway}" == "${4}" ]
 				then
-       					sed -i '/GATEWAY/d' $network_file
-       					echo GATEWAY=${4} >> $network_file
-    					echo "configuration gateway for network interface $1 success" !
+       				sed -i '/GATEWAY/d' $network_file
+       				echo GATEWAY=${4} >> $network_file
+    				echo "configuration gateway for network interface $1 success" !
 				fi
 			else
-       				sed -i '/GATEWAY/d' $network_file
+       			sed -i '/GATEWAY/d' $network_file
 				echo GATEWAY=${4} >> $network_file
-    				echo "configuration gateway for network interface $1 success" !
+    			echo "configuration gateway for network interface $1 success" !
 			fi
-    		fi
+    	fi
 
 		time_stamp $network_file
 		[ $mod == 1 ] && ci_m=1
-    		return 0
+    	return 0
 	}
 	
 
@@ -212,21 +212,20 @@ CentOS ()
 
 			if [ -n "$HN_MOD" ] && [ "$curr_hostname" != "$HN_MOD" ]
 			then 
-	    			echo $HN_MOD > /etc/hostname && echo "hostname chang" !
-	    			echo -e "127.0.0.1   $HN_MOD\n::1         $HN_MOD" >> /etc/hosts  && echo "hosts file changed" !
+	    		echo $HN_MOD > /etc/hostname && echo "hostname chang" !
+	    		echo -e "127.0.0.1   $HN_MOD\n::1         $HN_MOD" >> /etc/hosts  && echo "hosts file changed" !
 				ch_m=1
-        		fi
+        	fi
 		else
 			local curr_hostname=`grep "^HOSTNAME" /etc/sysconfig/network | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
 
-        		if [ -n "$HN_MOD" ] && [ "$curr_hostname" != "$HN_MOD" ]
+        	if [ -n "$HN_MOD" ] && [ "$curr_hostname" != "$HN_MOD" ]
 			then 
-            			sed -i "s/$curr_hostname/$HN_MOD/" /etc/sysconfig/network
-            			echo -e "127.0.0.1   $HN_MOD\n::1         $HN_MOD" >> /etc/hosts && echo "hosts file changed" !
+            	sed -i "s/$curr_hostname/$HN_MOD/" /etc/sysconfig/network
+            	echo -e "127.0.0.1   $HN_MOD\n::1         $HN_MOD" >> /etc/hosts && echo "hosts file changed" !
 				ch_m=1
 			fi
 		fi
-
 
 	}
 
@@ -235,19 +234,19 @@ CentOS ()
 	{
 		if [ ! $DN_MOD == "" ]
 		then
-        		dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
-                	dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
-                	dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
+        	dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
+            dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
+            dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
 
-                	if [ ! $dns1 == "" ] && [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 1p | grep -c $dns1) -eq 0 ]
+            if [ ! $dns1 == "" ] && [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 1p | grep -c $dns1) -eq 0 ]
 			then
-                		echo "nameserver $dns1" > /etc/resolv.conf
-                		echo "configuration dnsserver1 success" !
+				echo "nameserver $dns1" > /etc/resolv.conf
+                echo "configuration dnsserver1 success" !
 			else
 				echo "dnsserver1 not change" !
-                	fi
+            fi
 
-                	if [ ! $dns2 == "" ]
+            if [ ! $dns2 == "" ]
 			then
 				if [ $(grep -c "^nameserver" /etc/resolv.conf) -ge 2 ]
 				then
@@ -256,19 +255,19 @@ CentOS ()
 						curr_nameserver2=`grep "^nameserver" /etc/resolv.conf | sed -n 2p | awk '{ print $2 }'`
 						sed -i "s/$curr_nameserver2/$dns2/" /etc/resolv.conf
 						echo "nameserver2 $curr_nameserver2 existence" !
-                				echo "configuration dnsserver2 success" !
+                		echo "configuration dnsserver2 success" !
 					else
 						echo "dnsserver2 not change" !
 					fi
 				else
-                			echo "nameserver $dns2" >> /etc/resolv.conf
-                			echo "configuration dnsserver2 success" !
+                	echo "nameserver $dns2" >> /etc/resolv.conf
+                	echo "configuration dnsserver2 success" !
 					ci_m=1
-                		fi
+                fi
 
 			fi
 
-                	if [ ! $dns3 == "" ]
+            if [ ! $dns3 == "" ]
 			then
 				if [ $(grep -c "^nameserver" /etc/resolv.conf) -ge 3 ]
 				then
@@ -277,17 +276,17 @@ CentOS ()
 						curr_nameserver3=`grep "^nameserver" /etc/resolv.conf | sed -n 3p | awk '{ print $2 }'`
 						sed -i "s/$curr_nameserver3/$dns3/" /etc/resolv.conf
 						echo "nameserver3 $curr_nameserver3 existence" !
-                				echo "configuration dnsserver3 success" !
+                		echo "configuration dnsserver3 success" !
 					else
 						echo "dnsserver3 not change" !
 					fi
 				else
-                			echo "nameserver $dns3" >> /etc/resolv.conf
-                			echo "configuration dnsserver3 success" !
+                	echo "nameserver $dns3" >> /etc/resolv.conf
+                	echo "configuration dnsserver3 success" !
 				fi
-                	fi
+            fi
 
-                	chmod 644 /etc/resolv.conf
+            chmod 644 /etc/resolv.conf
 
 			if [ -f /etc/NetworkManager/NetworkManager.conf ]
 			then
@@ -303,7 +302,7 @@ CentOS ()
 
 	password ()
 	{
-    		if [ "$PS_MOD" ]
+    	if [ "$PS_MOD" ]
 		then
 			if [ -f $auto_tmp ]
 			then
@@ -313,7 +312,7 @@ CentOS ()
 				then
 					if [ ! "$PS_MOD" == "$PS_MOD_LAST" ]
 					then
-    						echo "root:$PS_MOD" | chpasswd && echo "password changed success" !
+    					echo "root:$PS_MOD" | chpasswd && echo "password changed success" !
 					else
 						echo "password not change" !
 					fi
@@ -323,7 +322,7 @@ CentOS ()
 			else
 				echo "root:$PS_MOD" | chpasswd && echo "password changed success" !
 			fi
-    		fi
+    	fi
 	}
 
 
@@ -367,18 +366,17 @@ CentOS ()
 				then
 					if [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
 					then
-	filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+						filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
 					else
 						[ -b /dev/sdb1 ] && /sbin/parted -s /dev/sdb rm 1
-						 /sbin/parted -s /dev/sdb mklabel msdos
+						/sbin/parted -s /dev/sdb mklabel msdos
 						/sbin/parted -s /dev/sdb mkpart primary 0% 100%
-                                        	mkfs -t $filesystem /dev/sdb1 || mkfs -t $filesystem -f /dev/sdb1
+                        mkfs -t $filesystem /dev/sdb1 || mkfs -t $filesystem -f /dev/sdb1
 					fi
 				else
-					 /sbin/parted -s /dev/sdb mklabel msdos
+					/sbin/parted -s /dev/sdb mklabel msdos
 					/sbin/parted -s /dev/sdb mkpart primary 0% 100%
-                                        mkfs -t $filesystem /dev/sdb1 && sleep 10
-					
+                    mkfs -t $filesystem /dev/sdb1 && sleep 10
 				fi
 
 				if [ $(mount | grep -c 'sdb1') -eq 0 ]
@@ -386,7 +384,7 @@ CentOS ()
 					[ -d /data ] || mkdir /data
 					mount -t $filesystem /dev/sdb1 /data
 					sed -i '/sdb1/d' /etc/fstab
-			echo "/dev/sdb1               /data                   $filesystem    defaults        0 0" >> /etc/fstab
+					echo "/dev/sdb1               /data                   $filesystem    defaults        0 0" >> /etc/fstab
 					echo "mount /dev/sdb1 disk success" ! 
 				fi
 			fi
@@ -394,16 +392,16 @@ CentOS ()
 
 			if [ -b /dev/sdb1 ] && [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
 			then
-			  if [ $(mount | grep -c 'sdb1') -eq 0 ]
-			  then
+				if [ $(mount | grep -c 'sdb1') -eq 0 ]
+				then
 				   [ -d /data ] || mkdir /data
 				   mount /dev/sdb1 /data && "mount /dev/sdb1 disk success" !
 
 				   if [ $(mount | grep -c 'sdb1') -ge 1 ]
 				   then
 					    sed -i '/sdb1/d' /etc/fstab
-		          filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
-			        echo "/dev/sdb1               /data                   $filesystem    defaults        0 0" >> /etc/fstab
+						filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+						echo "/dev/sdb1               /data                   $filesystem    defaults        0 0" >> /etc/fstab
 				   else
 					    echo "mount /dev/sdb1 disk failed" !
 				   fi
@@ -420,26 +418,31 @@ CentOS ()
 	{
 		if [ ! "$1" == "" ]
 		then
-    			IP_123=`echo $1 | awk -F "." '{printf("%d.%d.%d.",$1,$2,$3)}'`
-    			IP_4=`echo $1 | awk -F "." '{printf("%d", $4)}'`
+    		IP_123=`echo $1 | awk -F "." '{printf("%d.%d.%d.",$1,$2,$3)}'`
+    		IP_4=`echo $1 | awk -F "." '{printf("%d", $4)}'`
 
-    			if [ $IP_4 -ge 2 ] && [ $IP_4 -le 61 ] ; then
-        			IP_4="1"
-    			elif [ $IP_4 -ge 66 ] && [ $IP_4 -le 125 ] ; then
-        			IP_4="65"
-    			elif [ $IP_4 -ge 130 ] && [ $IP_4 -le 189 ] ; then
-        			IP_4="129"
-    			elif [ $IP_4 -ge 194 ] && [ $IP_4 -le 253 ]; then
-        			IP_4="193"
-    			fi
+    		if [ $IP_4 -ge 2 ] && [ $IP_4 -le 61 ]
+			then
+        		IP_4="1"
+    		elif [ $IP_4 -ge 66 ] && [ $IP_4 -le 125 ]
+			then
+        		IP_4="65"
+    		elif [ $IP_4 -ge 130 ] && [ $IP_4 -le 189 ]
+			then
+        		IP_4="129"
+    		elif [ $IP_4 -ge 194 ] && [ $IP_4 -le 253 ]
+			then
+        		IP_4="193"
+    		fi
 
-    			local route_lan_num=`grep -c "^any net 10.0.0.0 netmask 255.0.0.0" /etc/sysconfig/static-routes`
+    		local route_lan_num=`grep -c "^any net 10.0.0.0 netmask 255.0.0.0" /etc/sysconfig/static-routes`
+			
 			if [ ! "$route_lan_num" == "" ]
 			then
-    				if [ $route_lan_num -eq 0 ]
+    			if [ $route_lan_num -eq 0 ]
 				then
-        				echo "any net 10.0.0.0 netmask 255.0.0.0 gw $IP_123$IP_4" >> /etc/sysconfig/static-routes
-        				ci_m=1
+        			echo "any net 10.0.0.0 netmask 255.0.0.0 gw $IP_123$IP_4" >> /etc/sysconfig/static-routes
+        			ci_m=1
 				else
 					sed -i "/any net 10.0.0.0 netmask 255.0.0.0/d" /etc/sysconfig/static-routes
 					echo "any net 10.0.0.0 netmask 255.0.0.0 gw $IP_123$IP_4" >> /etc/sysconfig/static-routes
@@ -464,15 +467,15 @@ CentOS ()
 		if [ -f /mnt/cdrom/sysSetup.so ]
 		then
 			if [ -f /home/sysSetup.so ]
-                        then
-                        	if [ ! $(cksum /home/sysSetup.so | awk '{ print $1 }') == $(cksum /mnt/cdrom/sysSetup.so | awk '{ print $1 }') ]
+            then
+              	if [ ! $(cksum /home/sysSetup.so | awk '{ print $1 }') == $(cksum /mnt/cdrom/sysSetup.so | awk '{ print $1 }') ]
 				then
-                                	rm -f /home/sysSetup.so
-                                	cp /mnt/cdrom/sysSetup.so /home
-                                fi
+                   	rm -f /home/sysSetup.so
+                   	cp /mnt/cdrom/sysSetup.so /home
+                fi
 			else
 				cp /mnt/cdrom/sysSetup.so /home
-                        fi
+            fi
 		fi
 
 		if [ -f /mnt/cdrom/cloudsafe* ]
@@ -488,16 +491,16 @@ CentOS ()
 			fi
 
 			if [ $(rpm -qa | grep -c cloudsafe) -eq 0 ]
-                	then
-                       		rpm -vih $home/cloudsafe*.rpm
-                	else
-                     		if [ `find $home -name cloudsafe*.rpm | grep -c $(rpm -qa | grep cloudsafe)` -eq 0 ]
-                       		then
-                                	rpm -e cloudsafe
-                               		rpm -vih $home/cloudsafe*.rpm
-                       		fi
+            then
+            	rpm -vih $home/cloudsafe*.rpm
+            else
+            	if [ `find $home -name cloudsafe*.rpm | grep -c $(rpm -qa | grep cloudsafe)` -eq 0 ]
+            	then
+                   	rpm -e cloudsafe
+               		rpm -vih $home/cloudsafe*.rpm
+            	fi
 			fi
-               	fi
+       	fi
 
 		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -eq 0 ]
 		then
@@ -523,21 +526,20 @@ CentOS ()
 			netmask_lan=`echo $MS_MOD | awk -F "," '{printf $2}'`
 		fi
 
-
 		dev_array=`ip -o link | grep '\<link/ether\>' | awk -F ": " '{printf("%s ", $2)}'`
 		dev_count=$(i=0;for j in $dev_array;do i=`expr $i + 1`;done;echo $i)
 
-    		dev_wlan=`echo $dev_array | awk '{ print $1 }'`
+    	dev_wlan=`echo $dev_array | awk '{ print $1 }'`
 		echo "network interface $dev_wlan existence" !
 
 		if [ -n "${dev_wlan}" ] && [ -n "${ip_wlan}" ] && [ -n "${netmask_wlan}" ] && [ -n "${GW_MOD}" ]
 		then
-        		network_parameter $dev_wlan $ip_wlan $netmask_wlan $GW_MOD
+        	network_parameter $dev_wlan $ip_wlan $netmask_wlan $GW_MOD
 		fi
 
 		if [ $dev_count -ge 2 ]
 		then
-    			dev_lan=`echo $dev_array | awk '{ print $2 }'`
+    		dev_lan=`echo $dev_array | awk '{ print $2 }'`
 			echo "network interface $dev_lan existence" !
 
 			if [ -n "${dev_lan}" ] && [ -n "${ip_lan}" ] && [ -n "${netmask_lan}" ]
@@ -568,12 +570,11 @@ FreeBSD ()
 	network_parameter ()
 	{
 		curr_ip=`grep '^ifconfig' /etc/rc.conf | grep $1 | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | sed -n 1p`
-    		curr_netmask=`grep '^ifconfig' /etc/rc.conf | grep $1 | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | sed -n 2p`
-    		curr_gateway=`grep '^defaultrouter' /etc/rc.conf | grep $4 | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'`
+    	curr_netmask=`grep '^ifconfig' /etc/rc.conf | grep $1 | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | sed -n 2p`
+    	curr_gateway=`grep '^defaultrouter' /etc/rc.conf | grep $4 | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'`
 
-
-    		if [ ! "${1}" == "" ] && [ ! "${2}" == "" ] && [ ! "${3}" == "" ]
-    		then
+    	if [ ! "${1}" == "" ] && [ ! "${2}" == "" ] && [ ! "${3}" == "" ]
+    	then
 			if [ ! "${curr_ip}" == "" ] && [ ! "${curr_netmask}" == "" ]
 			then
 				if [ ! "${curr_ip}" == "${2}" ] && [ ! "${curr_netmask}" == "${3}" ]
@@ -584,8 +585,8 @@ FreeBSD ()
 					echo "configuration ipaddress and netmask for network interface $1 success" !
 					ci_m=1
 				fi
-    					echo "${1}:current ipaddress is ${curr_ip}" !
-    					echo "${1}:current netmask is ${curr_netmask}" !
+					echo "${1}:current ipaddress is ${curr_ip}" !
+    				echo "${1}:current netmask is ${curr_netmask}" !
 			else
 				echo ifconfig_${1}=\"inet ${2} netmask ${3}\" >> /etc/rc.conf
 				echo "configuration ipaddress and netmask for network interface $1 success" !
@@ -613,7 +614,7 @@ FreeBSD ()
 			fi
 		fi
 
-    		return 0
+    	return 0
 
 	}
 
@@ -647,7 +648,7 @@ FreeBSD ()
 	hostname ()
 	{
 
-        	if [ ! "$HN_MOD" == "" ]
+        if [ ! "$HN_MOD" == "" ]
 		then
 			HN_PRI=`grep "^hostname" /etc/rc.conf | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
 
@@ -655,20 +656,20 @@ FreeBSD ()
 			then
 				if [ "$HN_PRI" != "$HN_MOD" ]
 				then
-            				sed -e "/hostname/d" /etc/rc.conf > $tmp
-            				echo hostname=\"$HN_MOD\" >> $tmp
-            				cat $tmp > /etc/rc.conf
-            				ch_m=1 
-            				echo "hostname changed" !
+            		sed -e "/hostname/d" /etc/rc.conf > $tmp
+            		echo hostname=\"$HN_MOD\" >> $tmp
+            		cat $tmp > /etc/rc.conf
+            		ch_m=1 
+            		echo "hostname changed" !
 				fi
 			else
 				echo hostname=\"$HN_MOD\" >> /etc/rc.conf
 				ch_m=1
-                                echo "hostname changed" !
+                echo "hostname changed" !
 			fi
-        	else 
-            		echo "hostname not change" !
-        	fi
+        else 
+            echo "hostname not change" !
+        fi
 
 	}
 
@@ -676,66 +677,62 @@ FreeBSD ()
 	dnsserver ()
 	{
 		if [ ! $DN_MOD == "" ]
-                then
-                	dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
-                	dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
-                	dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
+        then
+            dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
+            dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
+            dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
 
-                	if [ ! $dns1 == "" ] && [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 1p | grep -c $dns1) -eq 0 ]
-                	then
-                        	echo "nameserver $dns1" > /etc/resolv.conf
+            if [ ! $dns1 == "" ] && [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 1p | grep -c $dns1) -eq 0 ]
+            then
+                echo "nameserver $dns1" > /etc/resolv.conf
 				echo "configuration dnsserver1 success" !
 			else
 				echo "dnserver1 not change"
-                        fi
+            fi
 
-                        if [ ! $dns2 == "" ]
-                        then
-                                if [ $(grep -c "^nameserver" /etc/resolv.conf) -ge 2 ]
-                                then
-                                        if [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 2p | grep -c $dns2) -eq 0 ]
-                                        then
-                                                curr_nameserver2=`grep "^nameserver" /etc/resolv.conf | sed -n 2p | awk '{ print $2
-}'`
-                                                sed -e "/$curr_nameserver2/d" /etc/resolv.conf > $tmp
+            if [ ! $dns2 == "" ]
+            then
+                if [ $(grep -c "^nameserver" /etc/resolv.conf) -ge 2 ]
+                then
+                    if [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 2p | grep -c $dns2) -eq 0 ]
+                    then
+                        curr_nameserver2=`grep "^nameserver" /etc/resolv.conf | sed -n 2p | awk '{ print $2}'`
+                        sed -e "/$curr_nameserver2/d" /etc/resolv.conf > $tmp
 						echo "nameserver $dns2" >> $tmp
 						cat $tmp > /etc/resolv.conf
-                                                echo "nameserver2 $curr_nameserver2 existence" !
+                        echo "nameserver2 $curr_nameserver2 existence" !
 						echo "configuration dnsserver2 success" !
 					else
 						echo "dnserver2 not change"
-                                        fi
-                                else
-                                        echo "nameserver $dns2" >> /etc/resolv.conf
+                    fi
+                else
+                    echo "nameserver $dns2" >> /etc/resolv.conf
 					echo "configuration dnsserver2 success" !
-                                fi
-
-                        fi
+                fi
+            fi
 
 			if [ ! $dns3 == "" ]
-                        then
-                                if [ $(grep -c "^nameserver" /etc/resolv.conf) -ge 3 ]
-                                then
-                                        if [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 3p | grep -c $dns3) -eq 0 ]
-                                        then
-                                                curr_nameserver3=`grep "^nameserver" /etc/resolv.conf | sed -n 3p | awk '{ print $2
-}'`
-                                                sed -e "/$curr_nameserver3/d" /etc/resolv.conf > $tmp
+            then
+                if [ $(grep -c "^nameserver" /etc/resolv.conf) -ge 3 ]
+                then
+                    if [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 3p | grep -c $dns3) -eq 0 ]
+                    then
+                        curr_nameserver3=`grep "^nameserver" /etc/resolv.conf | sed -n 3p | awk '{ print $2}'`
+                        sed -e "/$curr_nameserver3/d" /etc/resolv.conf > $tmp
 						echo "nameserver $dns3" >> $tmp
 						cat $tmp > /etc/resolv.conf
-                                                echo "nameserver3 $curr_nameserver3 existence" !
+                        echo "nameserver3 $curr_nameserver3 existence" !
 						echo "configuration dnsserver3 success" !
 					else
 						echo "dnserver3 not change"
-                                        fi
-                                else
-                                        echo "nameserver $dns3" >> /etc/resolv.conf
+                    fi
+                else
+                    echo "nameserver $dns3" >> /etc/resolv.conf
 					echo "configuration dnsserver3 success" !
 				fi
 
-                        fi
-
-                        chmod 644 /etc/resolv.conf
+            fi
+                chmod 644 /etc/resolv.conf
 		fi
 
 	}
@@ -758,7 +755,7 @@ FreeBSD ()
 		}
 
 		if [ "$PS_MOD" ]
-    		then 
+    	then 
 			if [ -f $auto_tmp ]
 			then
 				. $auto_tmp
@@ -768,21 +765,21 @@ FreeBSD ()
 					if [ "$PS_MOD_LAST" != "$PS_MOD" ]
 					then
 						bsdpasswd
-    						echo "password changed" !
+    					echo "password changed" !
 					else
 						echo "password not change" !
 					fi
 				else
 					bsdpasswd
-    					echo "password changed" !
+    				echo "password changed" !
 				fi
 			else
 				bsdpasswd
-    				echo "password changed" !
+    			echo "password changed" !
 			fi
-    		else 
-        		echo "password not change" !
-    		fi
+    	else 
+        	echo "password not change" !
+    	fi
 
 	}
 
@@ -793,11 +790,11 @@ FreeBSD ()
 		if [ "$ch_m" -eq 1 ]
 		then 
 			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
-    		elif [ "$ci_m" == 1 ]
+    	elif [ "$ci_m" == 1 ]
 		then
 			sh /etc/rc
 			echo "restart service success" !
-    		fi
+		fi
 	}
 
 	# parameters: ip_lan
@@ -805,21 +802,21 @@ FreeBSD ()
 	{
 		if [ ! "$1" == "" ]
 		then
-    			IP_123=`echo $1 | awk -F "." '{printf("%d.%d.%d.",$1,$2,$3)}'`
-    			IP_4=`echo $1 | awk -F "." '{printf("%d", $4)}'`
+    		IP_123=`echo $1 | awk -F "." '{printf("%d.%d.%d.",$1,$2,$3)}'`
+    		IP_4=`echo $1 | awk -F "." '{printf("%d", $4)}'`
 
-    			if [ $IP_4 -ge 2 ] && [ $IP_4 -le 61 ]
+    		if [ $IP_4 -ge 2 ] && [ $IP_4 -le 61 ]
 			then
-        			IP_4="1"
-    			elif [ $IP_4 -ge 66 ] && [ $IP_4 -le 125 ]
+        		IP_4="1"
+    		elif [ $IP_4 -ge 66 ] && [ $IP_4 -le 125 ]
 			then
-        			IP_4="65"
-    			elif [ $IP_4 -ge 130 ] && [ $IP_4 -le 189 ]
+        		IP_4="65"
+    		elif [ $IP_4 -ge 130 ] && [ $IP_4 -le 189 ]
 			then
-        			IP_4="129"
-		    	elif [ $IP_4 -ge 194 ] && [ $IP_4 -le 253 ]
+        		IP_4="129"
+		    elif [ $IP_4 -ge 194 ] && [ $IP_4 -le 253 ]
 			then
-        			IP_4="193"
+        		IP_4="193"
 			fi
 
 			if [ $(grep -c "-net 10.0.0.0/8" /etc/rc.conf) -eq 0 ]
@@ -833,7 +830,7 @@ EOF
 			else
 				echo "static route not change" !
 			fi
-    		fi
+    	fi
 
 	}
 
@@ -857,7 +854,6 @@ EOF
 		fi
 	}
 
-
 	hostname
 	datastore
 	network
@@ -879,19 +875,19 @@ Ubuntu ()
 			if [ $(grep -c "^auto ${1}" /etc/network/interfaces) -eq 0 ]
 			then
 				sed -i "/auto ${1}/d" /etc/network/interfaces
-                		echo "\nauto ${1}" >> /etc/network/interfaces
-        		fi
+                echo "\nauto ${1}" >> /etc/network/interfaces
+        	fi
 
-        		if [ $(grep "^iface ${1} inet" /etc/network/interfaces | grep  -c 'static') -eq 0 ]
+        	if [ $(grep "^iface ${1} inet" /etc/network/interfaces | grep  -c 'static') -eq 0 ]
 			then
-                		sed -i "/iface ${1} inet/d" /etc/network/interfaces
-                		echo "iface ${1} inet static" >> /etc/network/interfaces
-        		fi
+                sed -i "/iface ${1} inet/d" /etc/network/interfaces
+                echo "iface ${1} inet static" >> /etc/network/interfaces
+        	fi
 		fi
 
 		currl_ip=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep -v ^# | grep '^address' | sed -n 1p | grep -oP '\d+\.\d+\.\d+\.\d+'`
-currl_netmask=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep  -v ^# | grep '^netmask' | sed -n 1p | grep -oP '\d+\.\d+\.\d+\.\d+'`
-currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep -v ^# | grep '^gateway' | sed -n 1p | grep -oP '\d+\.\d+\.\d+\.\d+'`
+		currl_netmask=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep  -v ^# | grep '^netmask' | sed -n 1p | grep -oP '\d+\.\d+\.\d+\.\d+'`
+		currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep -v ^# | grep '^gateway' | sed -n 1p | grep -oP '\d+\.\d+\.\d+\.\d+'`
 
 		if [ "${2}" ]
 		then
@@ -899,12 +895,12 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 			then
 				if [ "$currl_ip" != "${2}" ]
 				then
-                			sed  -i "s/$currl_ip/${2}/" /etc/network/interfaces
+                	sed  -i "s/$currl_ip/${2}/" /etc/network/interfaces
 					echo "configuration ipaddress for network interface $1 success" !
 					ci_m=1
 				fi
 			else
-                		sed -i "/iface ${1} inet static/a\address ${2}" /etc/network/interfaces
+                sed -i "/iface ${1} inet static/a\address ${2}" /etc/network/interfaces
 				echo "configuration ipaddress for network interface $1 success" !
 				ci_m=1
 			fi
@@ -912,36 +908,36 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 
 		if [ "${3}" ]
 		then
-        		if [ "$currl_netmask" ]
+        	if [ "$currl_netmask" ]
 			then
 				if [ "$currl_netmask" != "${3}" ]
 				then
-                			sed  -i "s/$currl_netmask/${3}/" /etc/network/interfaces
+                	sed  -i "s/$currl_netmask/${3}/" /etc/network/interfaces
 					echo "configuration netmask for network interface $1 success" !
 					ci_m=1
 				fi
-        		else
-                		sed -i "/address ${2}/a\netmask ${3}" /etc/network/interfaces
+        	else
+                sed -i "/address ${2}/a\netmask ${3}" /etc/network/interfaces
 				echo "configuration netmask for network interface $1 success" !
 				ci_m=1
-        		fi
+        	fi
 		fi
 
 		if [ "${4}" ]
 		then
-        		if [ "$currl_gateway" ]
+        	if [ "$currl_gateway" ]
 			then
 				if [ "$currl_gateway" != "${4}" ]
 				then
-                			sed  -i "s/$currl_gateway/${4}/" /etc/network/interfaces
+                	sed  -i "s/$currl_gateway/${4}/" /etc/network/interfaces
 					echo "configuration gateway for network interface $1 success" !
 					ci_m=1
 				fi
-        		else
-                		sed -i "/netmask ${3}/a\gateway ${4}" /etc/network/interfaces
+        	else
+                sed -i "/netmask ${3}/a\gateway ${4}" /etc/network/interfaces
 				echo "configuration gateway for network interface $1 success" !
 				ci_m=1
-        		fi
+        	fi
 		fi
 
 		return 0
@@ -951,45 +947,45 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 	{
 		if [ $DN_MOD ]
 		then
-        		dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
-                	dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
-                	dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
+        	dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
+            dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
+            dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
 
 			if [ $dns1 ]
 			then
 				if [ $(sed -n '/^nameserver/p' /etc/resolvconf/resolv.conf.d/base | sed -n 1p | grep -c $dns1) -eq 0 ]
 				then
-                        		echo "nameserver $dns1" > /etc/resolvconf/resolv.conf.d/base
-                			echo "configuration dnsserver1 success" !
+                    echo "nameserver $dns1" > /etc/resolvconf/resolv.conf.d/base
+                	echo "configuration dnsserver1 success" !
 					ci_m=1
 				else
 					echo "dnsserver1 not change" !
-                		fi
+                fi
 			fi
 
-                	if [ $dns2 ]
+            if [ $dns2 ]
 			then
 				if [ $(sed -n '/^nameserver/p' /etc/resolvconf/resolv.conf.d/base | sed -n 2p | grep -c $dns2) -eq 0 ]
 				then
-                        		echo "nameserver $dns2" >> /etc/resolvconf/resolv.conf.d/base
-                			echo "configuration dnsserver2 success" !
+                    echo "nameserver $dns2" >> /etc/resolvconf/resolv.conf.d/base
+                	echo "configuration dnsserver2 success" !
 					ci_m=1
 				else
 					echo "dnsserver2 not change" !
-                		fi
+                fi
 			fi
 
-                	if [ $dns3 ]
+            if [ $dns3 ]
 			then
 				if [ $(sed -n '/^nameserver/p' /etc/resolvconf/resolv.conf.d/base | sed -n 3p | grep -c $dns3) -eq 0 ]
 				then
-                        		echo "nameserver $dns3" >> /etc/resolvconf/resolv.conf.d/base
-                			echo "configuration dnsserver3 success" !
+                    echo "nameserver $dns3" >> /etc/resolvconf/resolv.conf.d/base
+					echo "configuration dnsserver3 success" !
 					ci_m=1
 				else
-						echo "dnsserver3 not change" !
+					echo "dnsserver3 not change" !
 				fi
-                	fi
+            fi
 	
 		fi
 
@@ -999,26 +995,26 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 	hostname ()
 	{
 		local old_hostname=`cat /etc/hostname`
-    		if [ "${HN_MOD}" ]
+    	if [ "${HN_MOD}" ]
 		then
 			if [ "$old_hostname" ]
 			then 
 				if [ "${HN_MOD}" != "${old_hostname}" ]
 				then
-        				sed -i "s/$old_hostname/$HN_MOD/g" /etc/hostname
+        			sed -i "s/$old_hostname/$HN_MOD/g" /etc/hostname
 					ch_m=1
 					echo "configuration hostname success" !
 				else
 					echo "hostname not change" !
 				fi
 			else
-        				echo "${HN_MOD}" > /etc/hostname
-					ch_m=1
-					echo "configuration hostname success" !
+        		echo "${HN_MOD}" > /etc/hostname
+				ch_m=1
+				echo "configuration hostname success" !
 			fi
 
 		else
-        		echo "hostname not change" !
+        	echo "hostname not change" !
 			
 		fi
 	}
@@ -1026,26 +1022,27 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 
 	password ()
 	{
-		if [ "$PS_MOD" ];then
-                        if [ -f $auto_tmp ]
-                        then
-                        	. $auto_tmp
+		if [ "$PS_MOD" ]
+		then
+            if [ -f $auto_tmp ]
+            then
+                . $auto_tmp
 
-                                if [ "$PS_MOD_LAST" ]
-                                then
-                                        if [ "$PS_MOD" != "$PS_MOD_LAST" ]
-                                        then
-                                                echo "root:$PS_MOD" | chpasswd && echo "password changed success" !
+                if [ "$PS_MOD_LAST" ]
+                then
+                    if [ "$PS_MOD" != "$PS_MOD_LAST" ]
+                    then
+                        echo "root:$PS_MOD" | chpasswd && echo "password changed success" !
 					else
 						echo "password not change" !
-                                        fi
-                                else
-                                        echo "root:$PS_MOD" | chpasswd && echo "password changed success" !
-                                fi      
-                        else
-                                echo "root:$PS_MOD" | chpasswd && echo "password changed success" !
-                        fi
-                fi
+                    fi
+                else
+                    echo "root:$PS_MOD" | chpasswd && echo "password changed success" !
+                fi      
+            else
+                echo "root:$PS_MOD" | chpasswd && echo "password changed success" !
+            fi
+        fi
 	}
 
 
@@ -1053,78 +1050,78 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 	{
 		if [ "$ci_m" -eq 1 ]
 		then
-      service networking restart || ifdown -a;ifup -a
+			service networking restart || ifdown -a;ifup -a
 			/sbin/resolvconf -u
 		fi
 		
 		if [ "$ch_m" = 1 ]
 		then
 			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
-    fi
+		fi
 
 		echo "service restarted success" !
 	}
 
 
 	datastore ()
-        {
-                filesystem="ext4"
+    {
+        filesystem="ext4"
 
-                if [ "$FM_MOD" = "YES" ]
+        if [ "$FM_MOD" = "YES" ]
+        then
+            if [ -b /dev/sdb1 ]
+            then
+                if [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
                 then
-                        if [ -b /dev/sdb1 ]
-                        then
-                                if [ $(/sbin/blkid /dev/sdb1  | egrep -c 'ext2|ext3|ext4|xfs') -ge 1 ]
-                                then
-                       									filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
-                                else
-                                        [ -b /dev/sdb1 ] && /sbin/parted -s /dev/sdb rm 1
-                                        /sbin/parted -s /dev/sdb mklabel msdos
-                                        /sbin/parted -s /dev/sdb mkpart primary 0% 100%
-                                       	mkfs -t $filesystem /dev/sdb1 && sleep 10
-                                fi
-                        else
-                                /sbin/parted -s /dev/sdb mklabel msdos
-                                /sbin/parted -s /dev/sdb mkpart primary 0% 100%
-                                mkfs -t $filesystem /dev/sdb1 && sleep 10
-                        fi
-
-
-
-                        if [ $(mount | grep -c 'sdb1') -eq 0 ]
-                        then
-                                [ -d /data ] || mkdir /data
-                                mount -t $filesystem /dev/sdb1 /data
-
-                                if [ $(mount | grep -c 'sdb1') -ge 1 ]
-                                then
-                                        sed -i '/sdb1/d' /etc/fstab
-               													echo "/dev/sdb1                       /data           $filesystem    defaults        0       0" >> /etc/fstab
-                                else
-                                        echo "mount /dev/sdb1 disk failed" !
-                                fi
-                        fi
-                        
-                        
+                    filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
                 else
+                    [ -b /dev/sdb1 ] && /sbin/parted -s /dev/sdb rm 1
+                    /sbin/parted -s /dev/sdb mklabel msdos
+                    /sbin/parted -s /dev/sdb mkpart primary 0% 100%
+                    mkfs -t $filesystem /dev/sdb1 && sleep 10
+                fi
+            else
+                /sbin/parted -s /dev/sdb mklabel msdos
+                /sbin/parted -s /dev/sdb mkpart primary 0% 100%
+                mkfs -t $filesystem /dev/sdb1 && sleep 10
+            fi
 
-                        if [ $(mount | grep -c 'sdb1') -eq 0 ]
-                        then
-                                [ -d /data ] || mkdir /data
-                                mount /dev/sdb1 /data && echo "mount /dev/sdb1 disk success" !
-                        				filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
 
-                                if [ $(mount | grep -c 'sdb1') -ge 1 ]
-                                then
-                                        sed -i '/sdb1/d' /etc/fstab
-           															echo "/dev/sdb1                                 /data           $filesystem    defaults        0       0" >> /etc/fstab
-                                fi
+
+			if [ $(mount | grep -c 'sdb1') -eq 0 ]
+            then
+                [ -d /data ] || mkdir /data
+                mount -t $filesystem /dev/sdb1 /data
+
+                if [ $(mount | grep -c 'sdb1') -ge 1 ]
+                then
+                    sed -i '/sdb1/d' /etc/fstab
+               		echo "/dev/sdb1                       /data           $filesystem    defaults        0       0" >> /etc/fstab
+                else
+                    echo "mount /dev/sdb1 disk failed" !
+                fi
+            fi
+                        
+                        
+        else
+
+            if [ $(mount | grep -c 'sdb1') -eq 0 ]
+            then
+                [ -d /data ] || mkdir /data
+                mount /dev/sdb1 /data && echo "mount /dev/sdb1 disk success" !
+                filesystem=`/sbin/blkid  /dev/sdb1 | awk '{ print $3 }' | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
+
+                if [ $(mount | grep -c 'sdb1') -ge 1 ]
+                then
+                    sed -i '/sdb1/d' /etc/fstab
+           			echo "/dev/sdb1                                 /data           $filesystem    defaults        0       0" >> /etc/fstab
+                fi
                       
                                 
-                        fi
+            fi
 
-                fi
-        }
+        fi
+    }
 
 
 	static_route ()
@@ -1132,28 +1129,28 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 		if [ "${1}" ]
 		then
 			IP_123=`echo $1 | awk -F "." '{printf("%d.%d.%d.",$1,$2,$3)}'`
-    			IP_4=`echo $1 | awk -F "." '{printf("%d", $4)}'`
+    		IP_4=`echo $1 | awk -F "." '{printf("%d", $4)}'`
 
-    			if [ $IP_4 -ge 2 ] && [ $IP_4 -le 61 ]
+    		if [ $IP_4 -ge 2 ] && [ $IP_4 -le 61 ]
 			then
-        			IP_4="1"
-    			elif [ $IP_4 -ge 66 ] && [ $IP_4 -le 125 ]
+        		IP_4="1"
+    		elif [ $IP_4 -ge 66 ] && [ $IP_4 -le 125 ]
 			then
-        			IP_4="65"
-    			elif [ $IP_4 -ge 130 ] && [ $IP_4 -le 189 ]
+        		IP_4="65"
+    		elif [ $IP_4 -ge 130 ] && [ $IP_4 -le 189 ]
 			then
-        			IP_4="129"
-    			elif [ $IP_4 -ge 194 ] && [ $IP_4 -le 253 ]
+        		IP_4="129"
+    		elif [ $IP_4 -ge 194 ] && [ $IP_4 -le 253 ]
 			then
-        			IP_4="193"
-    			fi
+        		IP_4="193"
+    		fi
 
 			if [ $(grep -c "up route add -net 10.0.0.0 netmask 255.0.0.0 gw $IP_123$IP_4 $2" /etc/network/interfaces) -eq 0 ]
 			then
 				sed -i '/up route add*/d' /etc/network/interfaces
-    				echo "up route add -net 10.0.0.0 netmask 255.0.0.0 gw $IP_123$IP_4 $2" >> /etc/network/interfaces
-    				echo "configuration static route success" !
-    				ci_m=1
+    			echo "up route add -net 10.0.0.0 netmask 255.0.0.0 gw $IP_123$IP_4 $2" >> /etc/network/interfaces
+    			echo "configuration static route success" !
+    			ci_m=1
 			else
 				echo "static route not change" !
 			fi
@@ -1163,35 +1160,34 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 
 	nyinstall ()
 	{
-	cdrom=`ls -l /dev/cdrom* | grep "/dev/cdrom" | awk -F "->" '{printf $2}' | sed 's/^[ \t]*//g' | sed 's/[ \t]*$//g' | awk -F " " '{printf $1}'`
-                if [ $(mount  | grep $cdrom | grep -c '/mnt/cdrom') -eq 0 ]
-                then
-                        umount /dev/$cdrom
-                        mount /dev/$cdrom /mnt/cdrom && echo "mount cdrom success" !
+		cdrom=`ls -l /dev/cdrom* | grep "/dev/cdrom" | awk -F "->" '{printf $2}' | sed 's/^[ \t]*//g' | sed 's/[ \t]*$//g' | awk -F " " '{printf $1}'`
+        if [ $(mount  | grep $cdrom | grep -c '/mnt/cdrom') -eq 0 ]
+        then
+            umount /dev/$cdrom
+            mount /dev/$cdrom /mnt/cdrom && echo "mount cdrom success" !
 		fi
 
-                if [ -f /mnt/cdrom/sysSetup.so ]
-                then
-                	if [ -f /home/sysSetup.so ]
+        if [ -f /mnt/cdrom/sysSetup.so ]
+        then
+            if [ -f /home/sysSetup.so ]
 			then
 				if [ ! $(cksum /home/sysSetup.so | awk '{ print $1 }') == $(cksum /mnt/cdrom/sysSetup.so | awk '{ print $1 }') ]
 				then
 					rm -f /home/sysSetup.so
-                                	cp /mnt/cdrom/sysSetup.so /home
+                    cp /mnt/cdrom/sysSetup.so /home
 				fi
 			else
 				cp /mnt/cdrom/sysSetup.so /home
 			fi
-                fi
+        fi
 
 
-                if [ -f /mnt/cdrom/cloudsafe* ]
-                then
-                	rm -f $home/cloudsafe*
-
-                        cp /mnt/cdrom/cloudsafe*.amd64.deb $home/
-
-                fi
+        if [ -f /mnt/cdrom/cloudsafe* ]
+        then
+            rm -f $home/cloudsafe*
+			cp /mnt/cdrom/cloudsafe*.amd64.deb $home/
+		fi
+		
 		if [ -f /var/lib/dpkg/lock ]
 		then
 			rm -f /var/lib/dpkg/lock
@@ -1220,10 +1216,10 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 		fi
 
 		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -eq 0 ]
-                then
-                        /etc/init.d/cloudSafed start
-                        /etc/init.d/cloudGuardd start
-                fi
+        then
+            /etc/init.d/cloudSafed start
+            /etc/init.d/cloudGuardd start
+        fi
 
 		eject /dev/$cdrom
 	}
@@ -1244,27 +1240,26 @@ currl_gateway=`grep "iface ${1} inet static" -A10 /etc/network/interfaces | grep
 
 		dev_array=`ip -o link | grep '\<link/ether\>' | awk -F ": " '{printf("%s ", $2)}'`
 		dev_count=${#dev_array[*]}
-    		dev_wlan=`echo $dev_array | awk '{ print $1 }'`
+    	dev_wlan=`echo $dev_array | awk '{ print $1 }'`
 		echo "network interface $dev_wlan existence" !
 
-    		if [ -n "${dev_wlan}" ] && [ -n "${ip_wlan}" ] && [ -n "${netmask_wlan}" ] && [ -n "${GW_MOD}" ]
+    	if [ -n "${dev_wlan}" ] && [ -n "${ip_wlan}" ] && [ -n "${netmask_wlan}" ] && [ -n "${GW_MOD}" ]
 		then
-        		 network_parameter $dev_wlan $ip_wlan $netmask_wlan $GW_MOD
-    		fi
+			network_parameter $dev_wlan $ip_wlan $netmask_wlan $GW_MOD
+    	fi
 
 		if [ $dev_count -ge 2 ]
 		then
-    			dev_lan=`echo $dev_array | awk '{ print $2 }'`
+    		dev_lan=`echo $dev_array | awk '{ print $2 }'`
 			echo "network interface $dev_lan existence" !
 
-    			if [ -n "${dev_lan}" ] && [ -n "${ip_lan}" ] && [ -n "${netmask_lan}" ]
+    		if [ -n "${dev_lan}" ] && [ -n "${ip_lan}" ] && [ -n "${netmask_lan}" ]
 			then
-        			network_parameter $dev_lan $ip_lan $netmask_lan
+       			network_parameter $dev_lan $ip_lan $netmask_lan
 				static_route $ip_lan
-    			fi
+    		fi
 		fi
 	}
-
 
 	hostname
 	network
@@ -1286,56 +1281,56 @@ openSUSE ()
 		if [ $(grep '^BOOTPROTO' $network_file | grep -c 'static') -eq 0 ]
 		then
 			sed -i '/BOOTPROTO/d' $network_file
-    			echo "BOOTPROTO='static'" >> $network_file
-   	fi
+    		echo "BOOTPROTO='static'" >> $network_file
+		fi
    	
-   	if [ $(grep '^STARTMODE' $network_file | grep -c 'auto') -eq 0 ]
+		if [ $(grep '^STARTMODE' $network_file | grep -c 'auto') -eq 0 ]
 		then
 			sed -i '/STARTMODE/d' $network_file
-    			echo "STARTMODE='auto'" >> $network_file
-   	fi
+    		echo "STARTMODE='auto'" >> $network_file
+		fi
    	
-   	if [ ! "${2}" == "" ] && [ ! "${3}" == "" ]
+		if [ ! "${2}" == "" ] && [ ! "${3}" == "" ]
 		then
 			local curr_ip=`grep '^IPADDR' $network_file | grep -oP '\d+\.\d+\.\d+\.\d+'`
 			netmask=`ipcalc "${2}" "${3}" | grep "Netmask" | awk '{ print $4 }'`
 
 			if [ ! "${curr_ip}" == "" ]
 			then
-    				echo "${1}:current ipaddress is ${curr_ip}" !
+				echo "${1}:current ipaddress is ${curr_ip}" !
 
 				if [ ! "${curr_ip}" == "${2}" ]
 				then
-        				sed -i '/IPADDR/d' $network_file
-        				echo "IPADDR='${2}/$netmask'" >> $network_file
-    					echo "configuration ipaddress for network interface $1 success" !
+        			sed -i '/IPADDR/d' $network_file
+        			echo "IPADDR='${2}/$netmask'" >> $network_file
+    				echo "configuration ipaddress for network interface $1 success" !
 				fi
 			else
-        			sed -i '/IPADDR/d' $network_file
+        		sed -i '/IPADDR/d' $network_file
 				echo "IPADDR='${2}/$netmask'" >> $network_file
-    				echo "configuration ipaddress for network interface $1 success" !
+    			echo "configuration ipaddress for network interface $1 success" !
 			fi
 		fi
 		
 		if [ ! "${4}" == "" ]
 		then
-				gatewayfile=/etc/sysconfig/network/routes
-				curtgate=`grep default $gatewayfile | grep -oP '\d+\.\d+\.\d+\.\d+'`
+			gatewayfile=/etc/sysconfig/network/routes
+			curtgate=`grep default $gatewayfile | grep -oP '\d+\.\d+\.\d+\.\d+'`
 				
-				if [ "$curtgate" ]
+			if [ "$curtgate" ]
+			then
+				
+				if [ ! "$curtgate" == "${4}" ]
 				then
-				
-					if [ ! "$curtgate" == "${4}" ]
-					then
-						sed -i '/default/d' $gatewayfile
-						echo default ${4} - - >> $gatewayfile
-						echo "configuration gateway for network interface $1 success" !
-					fi
-					
-				else
-						echo default ${4} - - > $gatewayfile
-						echo "configuration gateway for network interface $1 success" !
+					sed -i '/default/d' $gatewayfile
+					echo default ${4} - - >> $gatewayfile
+					echo "configuration gateway for network interface $1 success" !
 				fi
+					
+			else
+				echo default ${4} - - > $gatewayfile
+				echo "configuration gateway for network interface $1 success" !
+			fi
 				
 		fi
 		
@@ -1361,19 +1356,19 @@ openSUSE ()
 	{
 		if [ ! $DN_MOD == "" ]
 		then
-        		dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
-                	dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
-                	dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
+        	dns1=`echo $DN_MOD | awk -F "," '{ print $1 }'`
+            dns2=`echo $DN_MOD | awk -F "," '{ print $2 }'`
+            dns3=`echo $DN_MOD | awk -F "," '{ print $3 }'`
 
-                	if [ ! $dns1 == "" ] && [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 1p | grep -c $dns1) -eq 0 ]
+           	if [ ! $dns1 == "" ] && [ $(sed -n '/^nameserver/p' /etc/resolv.conf | sed -n 1p | grep -c $dns1) -eq 0 ]
 			then
-                		echo "nameserver $dns1" > /etc/resolv.conf
-                		echo "configuration dnsserver1 success" !
+                echo "nameserver $dns1" > /etc/resolv.conf
+                echo "configuration dnsserver1 success" !
 			else
 				echo "dnsserver1 not change" !
-                	fi
+            fi
 
-                	if [ ! $dns2 == "" ]
+           	if [ ! $dns2 == "" ]
 			then
 				if [ $(grep -c "^nameserver" /etc/resolv.conf) -ge 2 ]
 				then
@@ -1382,19 +1377,19 @@ openSUSE ()
 						curr_nameserver2=`grep "^nameserver" /etc/resolv.conf | sed -n 2p | awk '{ print $2 }'`
 						sed -i "s/$curr_nameserver2/$dns2/" /etc/resolv.conf
 						echo "nameserver2 $curr_nameserver2 existence" !
-                				echo "configuration dnsserver2 success" !
+                		echo "configuration dnsserver2 success" !
 					else
 						echo "dnsserver2 not change" !
 					fi
 				else
-                			echo "nameserver $dns2" >> /etc/resolv.conf
-                			echo "configuration dnsserver2 success" !
+                	echo "nameserver $dns2" >> /etc/resolv.conf
+               		echo "configuration dnsserver2 success" !
 					ci_m=1
-                		fi
+           		fi
 
 			fi
 
-                	if [ ! $dns3 == "" ]
+           	if [ ! $dns3 == "" ]
 			then
 				if [ $(grep -c "^nameserver" /etc/resolv.conf) -ge 3 ]
 				then
@@ -1403,17 +1398,17 @@ openSUSE ()
 						curr_nameserver3=`grep "^nameserver" /etc/resolv.conf | sed -n 3p | awk '{ print $2 }'`
 						sed -i "s/$curr_nameserver3/$dns3/" /etc/resolv.conf
 						echo "nameserver3 $curr_nameserver3 existence" !
-                				echo "configuration dnsserver3 success" !
+						echo "configuration dnsserver3 success" !
 					else
 						echo "dnsserver3 not change" !
 					fi
 				else
-                			echo "nameserver $dns3" >> /etc/resolv.conf
-                			echo "configuration dnsserver3 success" !
+                	echo "nameserver $dns3" >> /etc/resolv.conf
+           			echo "configuration dnsserver3 success" !
 				fi
-                	fi
+           	fi
 
-                	chmod 644 /etc/resolv.conf
+           	chmod 644 /etc/resolv.conf
 
 			if [ -f /etc/NetworkManager/NetworkManager.conf ]
 			then
@@ -1429,7 +1424,7 @@ openSUSE ()
 	
 	password ()
 	{
-    		if [ "$PS_MOD" ]
+    	if [ "$PS_MOD" ]
 		then
 			if [ -f $auto_tmp ]
 			then
@@ -1439,7 +1434,7 @@ openSUSE ()
 				then
 					if [ ! "$PS_MOD" == "$PS_MOD_LAST" ]
 					then
-    						echo "root:$PS_MOD" | chpasswd && echo "password changed success" !
+    					echo "root:$PS_MOD" | chpasswd && echo "password changed success" !
 					else
 						echo "password not change" !
 					fi
@@ -1449,7 +1444,7 @@ openSUSE ()
 			else
 				echo "root:$PS_MOD" | chpasswd && echo "password changed success" !
 			fi
-    		fi
+   		fi
 	}
 	
 	restart_service ()
@@ -1536,24 +1531,28 @@ openSUSE ()
 		if [ "${1}" ]
 		then
 			IP_123=`echo $1 | awk -F "." '{printf("%d.%d.%d.",$1,$2,$3)}'`
-    	IP_4=`echo $1 | awk -F "." '{printf("%d", $4)}'`
+			IP_4=`echo $1 | awk -F "." '{printf("%d", $4)}'`
 
-    	if [ $IP_4 -ge 2 ] && [ $IP_4 -le 61 ] ; then
+    	if [ $IP_4 -ge 2 ] && [ $IP_4 -le 61 ]
+		then
     		IP_4="1"
-    	elif [ $IP_4 -ge 66 ] && [ $IP_4 -le 125 ] ; then
-      	IP_4="65"
-    	elif [ $IP_4 -ge 130 ] && [ $IP_4 -le 189 ] ; then
-     	 IP_4="129"
-   		elif [ $IP_4 -ge 194 ] && [ $IP_4 -le 253 ]; then
-      IP_4="193"
+    	elif [ $IP_4 -ge 66 ] && [ $IP_4 -le 125 ]
+		then
+			IP_4="65"
+    	elif [ $IP_4 -ge 130 ] && [ $IP_4 -le 189 ]
+		then
+			IP_4="129"
+   		elif [ $IP_4 -ge 194 ] && [ $IP_4 -le 253 ]
+		then
+			IP_4="193"
     	fi
     	
     	stanum=`grep -c "10.0.0.0"  /etc/sysconfig/network/routes`
     	
     	if [ $stanum -ne 0 ]
     	then
-				sed -i "/10.0.0.0/d" /etc/sysconfig/network/routes
-			fi
+			sed -i "/10.0.0.0/d" /etc/sysconfig/network/routes
+		fi
 			echo "10.0.0.0 $IP_123$IP_4 255.0.0.0" >> /etc/sysconfig/network/routes
 		fi
 	}
@@ -1571,6 +1570,7 @@ openSUSE ()
 
 		if [ $(rpm -qa | grep -c postgresql92-contrib) -eq 0 ]
 		then
+			/etc/init.d/network restart
 			zypper install -y postgresql92-contrib
 			[ $(rpm -qa | grep -c postgresql92-contrib) -eq 0 ] && echo "postgresql92-contrib install failed"!! && exit 1
 		fi
@@ -1621,8 +1621,6 @@ openSUSE ()
 
 		eject /dev/$cdrom
 	
-	
-	
 	}
 	
 	network ()
@@ -1639,21 +1637,20 @@ openSUSE ()
 			netmask_lan=`echo $MS_MOD | awk -F "," '{printf $2}'`
 		fi
 
-
 		dev_array=`ip -o link | grep '\<link/ether\>' | awk -F ": " '{printf("%s ", $2)}'`
 		dev_count=$(i=0;for j in $dev_array;do i=`expr $i + 1`;done;echo $i)
 
-    		dev_wlan=`echo $dev_array | awk '{ print $1 }'`
+    	dev_wlan=`echo $dev_array | awk '{ print $1 }'`
 		echo "network interface $dev_wlan existence" !
 
 		if [ -n "${dev_wlan}" ] && [ -n "${ip_wlan}" ] && [ -n "${netmask_wlan}" ] && [ -n "${GW_MOD}" ]
 		then
-        		network_parameter $dev_wlan $ip_wlan $netmask_wlan $GW_MOD
+        	network_parameter $dev_wlan $ip_wlan $netmask_wlan $GW_MOD
 		fi
 
 		if [ $dev_count -ge 2 ]
 		then
-    			dev_lan=`echo $dev_array | awk '{ print $2 }'`
+    		dev_lan=`echo $dev_array | awk '{ print $2 }'`
 			echo "network interface $dev_lan existence" !
 
 			if [ -n "${dev_lan}" ] && [ -n "${ip_lan}" ] && [ -n "${netmask_lan}" ]
@@ -1725,17 +1722,17 @@ case $plaver in
 Linux)
    enrpsrfs
 					
-   if [ -f /etc/redhat-release ]
-   then
-      CentOS
-   elif [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | egrep -c -i 'ubuntu|debian') -ge 1 ]
-   then
-      Ubuntu
-   elif [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | grep -c -i 'opensuse') -ge 1 ]
-   then
-      openSUSE
-	 else
-			echo "error,This System is not supported" !!
+	if [ -f /etc/redhat-release ]
+	then
+		CentOS
+	elif [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | egrep -c -i 'ubuntu|debian') -ge 1 ]
+	then
+		Ubuntu
+	elif [ -f /etc/os-release ] && [ $(grep '^ID' /etc/os-release | grep -c -i 'opensuse') -ge 1 ]
+	then
+		openSUSE
+	else
+		echo "error,This System is not supported" !!
    fi
 					
 ;;
