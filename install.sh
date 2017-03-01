@@ -1,9 +1,7 @@
 #!/bin/bash
 # Target: Auto install autovm.sh script
-# Update date: 2016/6/30
-# Author: niaoyun.com
-# Tel: 400-688-3065
-# Version: 1.33
+# Update date: 2017/3/1
+# Version: 1.34
 
 # system path
 home="/opt/vminit"

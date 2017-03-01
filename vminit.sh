@@ -1,10 +1,8 @@
 #!/bin/sh
 # Target: Automatic configuration hostname,password,network,datastore and install cloudsafe client for VMware virtual machine.
 # Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
-# Update date: 2017/2/28
-# Author: niaoyun.com
-# Tel: 400-688-3065
-# Version: 1.88
+# Update date: 2017/3/1
+# Version: 1.90
 
 HN_MOD={HN_MOD}		# hostname
 PS_MOD={PS_MOD}		# password
@@ -783,7 +781,61 @@ FreeBSD ()
 
 	}
 
+	nyinstall ()
+	{
+		if [ -c /dev/cd0 ]
+		then
+			mount -t cd9660 /dev/cd0 /mnt/cdrom && echo "mount cdrom device success"
+		fi
 
+		if [ -f /mnt/cdrom/sysSetup.so ]
+		then
+			if [ -f /home/sysSetup.so ]
+            then
+              	if [ ! $(cksum /home/sysSetup.so | awk '{ print $1 }') == $(cksum /mnt/cdrom/sysSetup.so | awk '{ print $1 }') ]
+				then
+                   	rm -f /home/sysSetup.so
+                   	cp /mnt/cdrom/sysSetup.so /home
+                fi
+			else
+				cp /mnt/cdrom/sysSetup.so /home
+            fi
+		fi
+
+		if [ -f /mnt/cdrom/cloudsafe* ]
+		then
+			rm -f $home/cloudsafe*
+			cp /mnt/cdrom/cloudsafe* $home/
+
+			if [ $(pkg info | grep -c cloudsafe) -eq 0 ]
+            then
+				/etc/rc.d/netif restart
+				route add default $GW_MOD
+            	pkg install -y $home/cloudsafe*
+            else
+            	if [ $(ls $home/cloudsafe* | grep -c `pkg info cloudsafe | grep Version | awk '{ print $3 }'`) -eq 0 ]
+            	then
+					/etc/rc.d/netif restart
+					route add default $GW_MOD
+                   	pkg remove -y cloudsafe
+               		pkg install -y $home/cloudsafe*
+            	fi
+			fi
+       	fi
+
+		if [ $(ps -A | grep -i cloudsafe | grep -c -v grep) -eq 0 ]
+		then
+			/etc/rc.d/cloudSafed start
+		fi
+		
+		if [ $(ps -A | grep -i cloudguard | grep -c -v grep) -eq 0 ]
+		then
+			/etc/rc.d/cloudGuardd start
+		fi
+
+		eject /dev/cd0
+	}
+	
 	restart_service ()
 	{
     
@@ -859,6 +911,7 @@ EOF
 	network
 	dnsserver
 	password
+	nyinstall
 	restart_service
 
 }

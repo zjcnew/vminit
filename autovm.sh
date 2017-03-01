@@ -2,10 +2,8 @@
 # Target: Automatic mount cdrom device and run configuration script
 # Application platform: CentOS RedHat FreeBSD Ubuntu Debian
 # Update content: Script integrate together with CentOS FreeBSD Ubuntu platform and some optimization.
-# Update date: 2017/1/12
-# Author: niaoyun.com
-# Tel: 400-688-3065
-# Version: 1.39
+# Update date: 2017/3/1
+# Version: 1.40
 
 # system path
 home="/opt/vminit"
