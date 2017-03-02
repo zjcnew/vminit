@@ -1,8 +1,8 @@
 #!/bin/sh
 # Target: Automatic configuration hostname,password,network,datastore and install cloudsafe client for VMware virtual machine.
 # Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
-# Update date: 2017/3/1
-# Version: 1.90
+# Update date: 2017/3/2
+# Version: 1.91
 
 HN_MOD={HN_MOD}		# hostname
 PS_MOD={PS_MOD}		# password
@@ -645,7 +645,6 @@ FreeBSD ()
 
 	hostname ()
 	{
-
         if [ ! "$HN_MOD" == "" ]
 		then
 			HN_PRI=`grep "^hostname" /etc/rc.conf | awk -F'=' '{ print $2 }' | sed -e 's/"//g'`
@@ -809,14 +808,12 @@ FreeBSD ()
 
 			if [ $(pkg info | grep -c cloudsafe) -eq 0 ]
             then
-				/etc/rc.d/netif restart
-				route add default $GW_MOD
+				/etc/netstart
             	pkg install -y $home/cloudsafe*
             else
             	if [ $(ls $home/cloudsafe* | grep -c `pkg info cloudsafe | grep Version | awk '{ print $3 }'`) -eq 0 ]
             	then
-					/etc/rc.d/netif restart
-					route add default $GW_MOD
+					/etc/netstart
                    	pkg remove -y cloudsafe
                		pkg install -y $home/cloudsafe*
             	fi
@@ -841,11 +838,10 @@ FreeBSD ()
     
 		if [ "$ch_m" -eq 1 ]
 		then 
-			reboot && echo "$(date '+%Y-%m-%d %H:%M:%S')  system will reboot now" !
+			reboot && echo "`date '+%Y-%m-%d %H:%M:%S'`  system will reboot now" !
     	elif [ "$ci_m" == 1 ]
 		then
-			sh /etc/rc
-			echo "restart service success" !
+			/etc/netstart && echo "`date '+%Y-%m-%d %H:%M:%S'` restart service success" !
 		fi
 	}
 
@@ -1773,6 +1769,7 @@ plaver=`uname -s`
 case $plaver in
 
 Linux)
+
    enrpsrfs
 					
 	if [ -f /etc/redhat-release ]
@@ -1790,8 +1787,9 @@ Linux)
 					
 ;;
 FreeBSD)
-   FreeBSD
 
+   FreeBSD
+   
 ;;
 *)
    echo "error,This platform is not supported" !!
@@ -1802,6 +1800,4 @@ esac
 rm -f $tmp
 
 # End run
-echo "$(date '+%Y-%m-%d %H:%M:%S')  vminit script ended" !
-
-exit 0
+echo "`date '+%Y-%m-%d %H:%M:%S'`  vminit script ended" !
