@@ -1,8 +1,8 @@
 #!/bin/sh
 # Target: Automatic configuration hostname,password,network,datastore and install cloudsafe client for VMware virtual machine.
 # Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
-# Update date: 2017/3/2
-# Version: 1.91
+# Update date: 2017/3/3
+# Version: 1.92
 
 HN_MOD={HN_MOD}		# hostname
 PS_MOD={PS_MOD}		# password
@@ -809,26 +809,36 @@ FreeBSD ()
 			if [ $(pkg info | grep -c cloudsafe) -eq 0 ]
             then
 				/etc/netstart
-            	pkg install -y $home/cloudsafe*
+            	pkg install -y --no-repo-update $home/cloudsafe*
+				
+				if [ $(ps -A | grep -i cloudsafe | grep -c -v grep) -eq 0 ]
+				then
+					/etc/rc.d/cloudSafed start
+				fi
+		
+				if [ $(ps -A | grep -i cloudguard | grep -c -v grep) -eq 0 ]
+				then
+					/etc/rc.d/cloudGuardd start
+				fi
             else
             	if [ $(ls $home/cloudsafe* | grep -c `pkg info cloudsafe | grep Version | awk '{ print $3 }'`) -eq 0 ]
             	then
 					/etc/netstart
                    	pkg remove -y cloudsafe
-               		pkg install -y $home/cloudsafe*
+               		pkg install -y --no-repo-update $home/cloudsafe*
+					
+					if [ $(ps -A | grep -i cloudsafe | grep -c -v grep) -eq 0 ]
+					then
+						/etc/rc.d/cloudSafed start
+					fi
+		
+					if [ $(ps -A | grep -i cloudguard | grep -c -v grep) -eq 0 ]
+					then
+						/etc/rc.d/cloudGuardd start
+					fi
             	fi
 			fi
        	fi
-
-		if [ $(ps -A | grep -i cloudsafe | grep -c -v grep) -eq 0 ]
-		then
-			/etc/rc.d/cloudSafed start
-		fi
-		
-		if [ $(ps -A | grep -i cloudguard | grep -c -v grep) -eq 0 ]
-		then
-			/etc/rc.d/cloudGuardd start
-		fi
 
 		eject /dev/cd0
 	}
