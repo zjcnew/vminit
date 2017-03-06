@@ -1,8 +1,8 @@
 #!/bin/sh
 # Target: Automatic configuration hostname,password,network,datastore and install cloudsafe client for VMware virtual machine.
 # Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
-# Update date: 2017/3/3
-# Version: 1.92
+# Update date: 2017/3/6
+# Version: 1.93
 
 HN_MOD={HN_MOD}		# hostname
 PS_MOD={PS_MOD}		# password
@@ -492,15 +492,22 @@ CentOS ()
             then
             	rpm -vih $home/cloudsafe*.rpm
             else
-            	if [ `find $home -name cloudsafe*.rpm | grep -c $(rpm -qa | grep cloudsafe)` -eq 0 ]
+				notinver=$(rpm -qpi cloudsafe*.rpm | grep 'Version' | awk '{ print $3 }')
+				alrinver=$(rpm -qi cloudsafe | grep 'Version' | awk '{ print $3 }')
+
+				notinrea=$(rpm -qpi cloudsafe*.rpm | grep 'Release' | awk '{ print $3 }')
+				alrinrea=$(rpm -qi cloudsafe | grep 'Release' | awk '{ print $3 }')
+				
+            	if [ ! $notinver == $alrinver -o ! $notinrea == $alrinrea ]
             	then
                    	rpm -e cloudsafe
                		rpm -vih $home/cloudsafe*.rpm
+					echo "Uninstall the old version of cloudsafe-$alrinver-$alrinrea and install the new version of cloudsafe-$notinver-notinrea"
             	fi
 			fi
        	fi
 
-		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -eq 0 ]
+		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -le 1 ]
 		then
 			/etc/init.d/cloudSafed start
 			/etc/init.d/cloudGuardd start
@@ -806,7 +813,7 @@ FreeBSD ()
 			rm -f $home/cloudsafe*
 			cp /mnt/cdrom/cloudsafe* $home/
 
-			if [ $(pkg info | grep -c cloudsafe) -eq 0 ]
+			if [ $(pkg info | grep -c -i cloudsafe) -eq 0 ]
             then
 				/etc/netstart
             	pkg install -y --no-repo-update $home/cloudsafe*
@@ -1267,14 +1274,18 @@ Ubuntu ()
 			echo "cloudsafe packages not install"!
 			dpkg -i $home/cloudsafe*.deb
 		else
-			if [ `dpkg -l | grep cloudsafe | grep -c $(dpkg --info $home/cloudsafe*.deb | grep 'Version' | awk '{ print $2 }')` -eq 0 ]
+			notinver=$(dpkg -I cloudsafe* | grep 'Version' | awk '{ print $2 }')
+			alrinver=$(dpkg -s cloudsafe | grep 'Version' | awk '{ print $2 }')
+			
+			if [ ! $notinver == $alrinver ]
 			then
 				dpkg -P cloudsafe
 				dpkg -i $home/cloudsafe*.deb
+				echo "Uninstall the old version of cloudsafe-$alrinver and install the new version of cloudsafe-$notinver"
 			fi
 		fi
 
-		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -eq 0 ]
+		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -le 1 ]
         then
             /etc/init.d/cloudSafed start
             /etc/init.d/cloudGuardd start
@@ -1660,14 +1671,21 @@ openSUSE ()
 				cp /mnt/cdrom/cloudsafe*.i686.rpm $home/
 			fi
 
-			if [ $(rpm -qa | grep -c cloudsafe) -eq 0 ]
+			if [ $(rpm -qa | grep -c -i cloudsafe) -eq 0 ]
             then
                 rpm -vih $home/cloudsafe*.rpm
             else
-                if [ `find $home -name cloudsafe*.rpm | grep -c $(rpm -qa | grep cloudsafe)` -eq 0 ]
+				notinver=$(rpm -qpi cloudsafe*.rpm | grep 'Version' | awk '{ print $3 }')
+				alrinver=$(rpm -qi cloudsafe | grep 'Version' | awk '{ print $3 }')
+
+				notinrea=$(rpm -qpi cloudsafe*.rpm | grep 'Release' | awk '{ print $3 }')
+				alrinrea=$(rpm -qi cloudsafe | grep 'Release' | awk '{ print $3 }')
+				
+                if [ ! $notinver == $alrinver -o ! $notinrea == $alrinrea ]
                 then
                     rpm -e cloudsafe
                     rpm -vih $home/cloudsafe*.rpm
+					echo "Uninstall the old version of cloudsafe-$alrinver-$alrinrea and install the new version of cloudsafe-$notinver-notinrea"
                 fi
 			fi
         fi
