@@ -2,15 +2,18 @@
 ========================
 使用Shell编写的支持VMware Workstation虚拟机针对Linux系统实现自动化配置，支持CentOS、Red Hat、openSuSE、Ubuntu、Debian、FreeBSD系统！
 
-###环境需求
+环境需求
+------------------------
   CentOS/Red Hat、Ubuntu/Debian系统安装 sed gawk parted grep ntp ntpdate util-linux-ng iproute 软件包；openSUSE系统安装 postgresql92-contrib 软件包；FreeBSD系统安装 zfs expect cksum gflags 软件包。
 
-###文件说明
+文件说明
+------------------------
   autovm.sh  添加到开机自启动运行
   install.sh 自动部署autovm.sh脚本到系统
   vminit.sh  自动运行主程序
   
-###使用方法：
+使用方法
+------------------------
 
 	1.将autovm.sh与install.sh脚本拷贝至虚拟机系统，执行sh install.sh安装脚本；
 
