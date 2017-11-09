@@ -1,8 +1,8 @@
 #!/bin/sh
 # Target: Automatic configuration hostname,password,network,datastore and install cloudsafe client for VMware virtual machine.
 # Application platform: CentOS FreeBSD Ubuntu Debian OpenSUSE
-# Update date: 2017/3/6
-# Version: 1.93
+# Update date: 2017/11/9
+# Version: 1.94
 
 HN_MOD={HN_MOD}		# hostname
 PS_MOD={PS_MOD}		# password
@@ -452,70 +452,6 @@ CentOS ()
 		fi
 	}
 
-	nyinstall ()
-	{
-
-		cdrom=`ls -l /dev/cdrom* | grep "/dev/cdrom" | awk -F "->" '{printf $2}' | sed 's/^[ \t]*//g' | sed 's/[ \t]*$//g' | awk -F " " '{printf $1}'`
-		if [ $(mount  | grep $cdrom | grep -c '/mnt/cdrom') -eq 0 ]
-		then
-			umount /dev/$cdrom
-			mount /dev/$cdrom /mnt/cdrom && echo "mount cdrom success" !
-		fi
-
-		if [ -f /mnt/cdrom/sysSetup.so ]
-		then
-			if [ -f /home/sysSetup.so ]
-            then
-              	if [ ! $(cksum /home/sysSetup.so | awk '{ print $1 }') == $(cksum /mnt/cdrom/sysSetup.so | awk '{ print $1 }') ]
-				then
-                   	rm -f /home/sysSetup.so
-                   	cp /mnt/cdrom/sysSetup.so /home
-                fi
-			else
-				cp /mnt/cdrom/sysSetup.so /home
-            fi
-		fi
-
-		if [ -f /mnt/cdrom/cloudsafe* ]
-		then
-			rm -f $home/cloudsafe*
-
-			if [ $(uname -i) == "x86_64" ]
-			then
-				cp /mnt/cdrom/cloudsafe*.x86_64.rpm $home/
-			elif [ $(uname -i) == "i386" ]
-			then
-				cp /mnt/cdrom/cloudsafe*.i686.rpm $home/
-			fi
-
-			if [ $(rpm -qa | grep -c cloudsafe) -eq 0 ]
-            then
-            	rpm -vih $home/cloudsafe*.rpm
-            else
-				notinver=$(rpm -qpi cloudsafe*.rpm | grep 'Version' | awk '{ print $3 }')
-				alrinver=$(rpm -qi cloudsafe | grep 'Version' | awk '{ print $3 }')
-
-				notinrea=$(rpm -qpi cloudsafe*.rpm | grep 'Release' | awk '{ print $3 }')
-				alrinrea=$(rpm -qi cloudsafe | grep 'Release' | awk '{ print $3 }')
-				
-            	if [ ! $notinver == $alrinver -o ! $notinrea == $alrinrea ]
-            	then
-                   	rpm -e cloudsafe
-               		rpm -vih $home/cloudsafe*.rpm
-					echo "Uninstall the old version of cloudsafe-$alrinver-$alrinrea and install the new version of cloudsafe-$notinver-notinrea"
-            	fi
-			fi
-       	fi
-
-		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -le 1 ]
-		then
-			/etc/init.d/cloudSafed start
-			/etc/init.d/cloudGuardd start
-		fi
-
-		eject /dev/$cdrom
-	}
-
 
 	network ()
 	{
@@ -561,7 +497,6 @@ CentOS ()
 	network
 	password
 	datastore
-	nyinstall
 	restart_service
 	dnsserver
 }
@@ -786,69 +721,6 @@ FreeBSD ()
     	fi
 
 	}
-
-	nyinstall ()
-	{
-		if [ -c /dev/cd0 ]
-		then
-			mount -t cd9660 /dev/cd0 /mnt/cdrom && echo "mount cdrom device success"
-		fi
-
-		if [ -f /mnt/cdrom/sysSetup.so ]
-		then
-			if [ -f /home/sysSetup.so ]
-            then
-              	if [ ! $(cksum /home/sysSetup.so | awk '{ print $1 }') == $(cksum /mnt/cdrom/sysSetup.so | awk '{ print $1 }') ]
-				then
-                   	rm -f /home/sysSetup.so
-                   	cp /mnt/cdrom/sysSetup.so /home
-                fi
-			else
-				cp /mnt/cdrom/sysSetup.so /home
-            fi
-		fi
-
-		if [ -f /mnt/cdrom/cloudsafe* ]
-		then
-			rm -f $home/cloudsafe*
-			cp /mnt/cdrom/cloudsafe* $home/
-
-			if [ $(pkg info | grep -c -i cloudsafe) -eq 0 ]
-            then
-				/etc/netstart
-            	pkg install -y --no-repo-update $home/cloudsafe*
-				
-				if [ $(ps -A | grep -i cloudsafe | grep -c -v grep) -eq 0 ]
-				then
-					/etc/rc.d/cloudSafed start
-				fi
-		
-				if [ $(ps -A | grep -i cloudguard | grep -c -v grep) -eq 0 ]
-				then
-					/etc/rc.d/cloudGuardd start
-				fi
-            else
-            	if [ $(ls $home/cloudsafe* | grep -c `pkg info cloudsafe | grep Version | awk '{ print $3 }'`) -eq 0 ]
-            	then
-					/etc/netstart
-                   	pkg remove -y cloudsafe
-               		pkg install -y --no-repo-update $home/cloudsafe*
-					
-					if [ $(ps -A | grep -i cloudsafe | grep -c -v grep) -eq 0 ]
-					then
-						/etc/rc.d/cloudSafed start
-					fi
-		
-					if [ $(ps -A | grep -i cloudguard | grep -c -v grep) -eq 0 ]
-					then
-						/etc/rc.d/cloudGuardd start
-					fi
-            	fi
-			fi
-       	fi
-
-		eject /dev/cd0
-	}
 	
 	restart_service ()
 	{
@@ -924,7 +796,6 @@ EOF
 	network
 	dnsserver
 	password
-	nyinstall
 	restart_service
 
 }
@@ -1223,77 +1094,6 @@ Ubuntu ()
 		fi
 	}
 
-
-	nyinstall ()
-	{
-		cdrom=`ls -l /dev/cdrom* | grep "/dev/cdrom" | awk -F "->" '{printf $2}' | sed 's/^[ \t]*//g' | sed 's/[ \t]*$//g' | awk -F " " '{printf $1}'`
-        if [ $(mount  | grep $cdrom | grep -c '/mnt/cdrom') -eq 0 ]
-        then
-            umount /dev/$cdrom
-            mount /dev/$cdrom /mnt/cdrom && echo "mount cdrom success" !
-		fi
-
-        if [ -f /mnt/cdrom/sysSetup.so ]
-        then
-            if [ -f /home/sysSetup.so ]
-			then
-				if [ ! $(cksum /home/sysSetup.so | awk '{ print $1 }') == $(cksum /mnt/cdrom/sysSetup.so | awk '{ print $1 }') ]
-				then
-					rm -f /home/sysSetup.so
-                    cp /mnt/cdrom/sysSetup.so /home
-				fi
-			else
-				cp /mnt/cdrom/sysSetup.so /home
-			fi
-        fi
-
-
-        if [ -f /mnt/cdrom/cloudsafe* ]
-        then
-            rm -f $home/cloudsafe*
-			cp /mnt/cdrom/cloudsafe*.amd64.deb $home/
-		fi
-		
-		if [ -f /var/lib/dpkg/lock ]
-		then
-			rm -f /var/lib/dpkg/lock
-		fi
-		
-		if [ -f /var/lib/apt/lists/lock ]
-		then
-			rm -f /var/lib/apt/lists/lock
-		fi
-		
-		if [ -f /var/cache/apt/archives/lock ]
-		then
-			rm -f /var/cache/apt/archives/lock
-		fi
-		
-		if [ $(dpkg -l | grep -c -i cloudsafe) -eq 0 ]
-		then
-			echo "cloudsafe packages not install"!
-			dpkg -i $home/cloudsafe*.deb
-		else
-			notinver=$(dpkg -I cloudsafe* | grep 'Version' | awk '{ print $2 }')
-			alrinver=$(dpkg -s cloudsafe | grep 'Version' | awk '{ print $2 }')
-			
-			if [ ! $notinver == $alrinver ]
-			then
-				dpkg -P cloudsafe
-				dpkg -i $home/cloudsafe*.deb
-				echo "Uninstall the old version of cloudsafe-$alrinver and install the new version of cloudsafe-$notinver"
-			fi
-		fi
-
-		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -le 1 ]
-        then
-            /etc/init.d/cloudSafed start
-            /etc/init.d/cloudGuardd start
-        fi
-
-		eject /dev/$cdrom
-	}
-
 	network ()
 	{
 		if [ "$IP_MOD" ]
@@ -1336,7 +1136,6 @@ Ubuntu ()
 	dnserver
 	password
 	datastore
-	nyinstall
 	restart_service
 
 	return 0
@@ -1627,78 +1426,6 @@ openSUSE ()
 		fi
 	}
 	
-	nyinstall ()
-	{
-	
-		cdrom=`ls -l /dev/cdrom* | grep "/dev/cdrom" | awk -F "->" '{printf $2}' | sed 's/^[ \t]*//g' | sed 's/[ \t]*$//g' | awk -F " " '{printf $1}'`
-		
-        if [ $(mount  | grep $cdrom | grep -c '/mnt/cdrom') -eq 0 ]
-        then
-            umount /dev/$cdrom
-            mount /dev/$cdrom /mnt/cdrom && echo "mount cdrom success" !
-		fi
-
-		if [ $(rpm -qa | grep -c postgresql92-contrib) -eq 0 ]
-		then
-			/etc/init.d/network restart
-			zypper install -y postgresql92-contrib
-			[ $(rpm -qa | grep -c postgresql92-contrib) -eq 0 ] && echo "postgresql92-contrib install failed"!! && exit 1
-		fi
-		
-        if [ -f /mnt/cdrom/sysSetup.so ]
-		then
-			if [ -f /home/sysSetup.so ]
-            then
-                if [ ! $(cksum /home/sysSetup.so | awk '{ print $1 }') == $(cksum /mnt/cdrom/sysSetup.so | awk '{ print $1 }') ]
-				then
-                    rm -f /home/sysSetup.so
-                    cp /mnt/cdrom/sysSetup.so /home
-                fi
-			else
-				cp /mnt/cdrom/sysSetup.so /home
-            fi
-		fi
-
-		if [ -f /mnt/cdrom/cloudsafe* ]
-		then
-			rm -f $home/cloudsafe*
-
-			if [ $(uname -i) == "x86_64" ]
-			then
-				cp /mnt/cdrom/cloudsafe*.x86_64.rpm $home/
-			elif [ $(uname -i) == "i386" ]
-			then
-				cp /mnt/cdrom/cloudsafe*.i686.rpm $home/
-			fi
-
-			if [ $(rpm -qa | grep -c -i cloudsafe) -eq 0 ]
-            then
-                rpm -vih $home/cloudsafe*.rpm
-            else
-				notinver=$(rpm -qpi cloudsafe*.rpm | grep 'Version' | awk '{ print $3 }')
-				alrinver=$(rpm -qi cloudsafe | grep 'Version' | awk '{ print $3 }')
-
-				notinrea=$(rpm -qpi cloudsafe*.rpm | grep 'Release' | awk '{ print $3 }')
-				alrinrea=$(rpm -qi cloudsafe | grep 'Release' | awk '{ print $3 }')
-				
-                if [ ! $notinver == $alrinver -o ! $notinrea == $alrinrea ]
-                then
-                    rpm -e cloudsafe
-                    rpm -vih $home/cloudsafe*.rpm
-					echo "Uninstall the old version of cloudsafe-$alrinver-$alrinrea and install the new version of cloudsafe-$notinver-notinrea"
-                fi
-			fi
-        fi
-
-		if [ $(ps -fel | grep -v grep | grep -c -i cloudsafe) -eq 0 ]
-		then
-			/etc/init.d/cloudSafed start
-			/etc/init.d/cloudGuardd start
-		fi
-
-		eject /dev/$cdrom
-	
-	}
 	
 	network ()
 	{
@@ -1744,7 +1471,6 @@ openSUSE ()
 	dnsserver
 	password
 	datastore
-	nyinstall
 	restart_service
 }
 

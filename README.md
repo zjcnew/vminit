@@ -1,4 +1,4 @@
-﻿vminit v1.93 [![Build Status](https://img.shields.io/travis/rust-lang/rust/master.svg?branch=master)](https://github.com/zjcnew/vminit) [![QQ-619877197](https://img.shields.io/badge/QQ-619877197-red.svg?qq=619877197)](tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=619877197)
+﻿vminit v1.94 [![Build Status](https://img.shields.io/travis/rust-lang/rust/master.svg?branch=master)](https://github.com/zjcnew/vminit) [![QQ-619877197](https://img.shields.io/badge/QQ-619877197-red.svg?qq=619877197)](tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=619877197)
 ========================
 使用Shell编写的支持VMware Workstation虚拟机针对Linux系统实现自动化配置，支持CentOS、Red Hat、openSuSE、Ubuntu、Debian、FreeBSD系统！
 
@@ -7,9 +7,8 @@
 
 ###文件说明
   autovm.sh  添加到开机自启动运行
-  install.sh 自动部署autovm.sh的脚本到系统
+  install.sh 自动部署autovm.sh脚本到系统
   vminit.sh  自动运行主程序
-  vminit_manual.sh  代替vminit.sh手工运行的主程序
   
 ###使用方法：
 
@@ -26,5 +25,3 @@
 			GW_MOD=192.168.80.1							#外网网关
 			DN_MOD=202.96.134.133,202.96.128.86			#DNS服务器ip地址
 			FM_MOD=YES									#是否对数据盘分区格式化
-
-	3.vminit_manual.sh为手动执行脚本请写入开机自启动，虚拟机开机后自动运行提示键入IP地址与登录密码交互式来完成系统配置。
